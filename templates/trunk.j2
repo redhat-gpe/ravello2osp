@@ -1,0 +1,18 @@
+  {% for subport in subports %}
+  {{ name}}_vlan{{ subport["vlanId"] }}_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: {{network}}_vlan{{ subport["vlanId"] }}_network }
+      mac_address: "{{ mac }}"
+      port_security_enabled: False
+  {% endfor %}
+  {{ name}}_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: {{ name }}
+      port: { get_resource: {{ name }}_port }
+      sub_ports:
+      {% for subport in subports %}
+        - {"segmentation_id": {{ subport["vlanId"] }} , "segmentation_type": "vlan", "port": { get_resource: {{ name }}_vlan{{ subport["vlanId"] }}_port } }
+      {% endfor %}
+

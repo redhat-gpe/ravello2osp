@@ -1,0 +1,11 @@
+  {{name}}_server:
+    type: OS::Nova::Server
+    properties:
+      name: "{{ name }}"
+      image: "{{ name }}-{{root_disk}}"
+      flavor: { get_resource: {{ flavor }}_flavor }
+      networks:
+        {% for nic in nics %}
+        - port: { get_resource: {{name}}-{{loop.index-1}}_port}
+        {% endfor %}
+

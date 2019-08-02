@@ -1,0 +1,22 @@
+  openstack_project:
+    type: OS::Keystone::Project
+    properties:
+      name: { get_param: project_name }
+      domain: Default
+      description: { get_param: project_description }
+  
+  openstack_project_role:
+    type: OS::Keystone::UserRoleAssignment 
+    properties: 
+      user: admin
+      roles:  
+        - {project: {get_resource: openstack_project}, role: admin} 
+
+  openstack_project_quota:
+    type: OS::Nova::Quota
+    properties:
+      cores: -1
+      instances: -1
+      project: {get_resource: openstack_project}
+      ram: -1
+

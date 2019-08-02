@@ -1,0 +1,9 @@
+  {{ name }}_flavor:
+    type: OS::Nova::Flavor
+    properties:
+      ram: "{{ memory }}"
+      vcpus: "{{ cpu }}"
+      disk: "{{ disk }}"
+      name: "{{ name }}"
+      is_public: False
+
