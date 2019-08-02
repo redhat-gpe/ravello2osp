@@ -1,0 +1,23 @@
+  {{name}}_router:
+    type: OS::Neutron::Router
+    properties:
+      name: "{{ name }}"
+
+  {% for interface in interfaces %}
+  {{ name}}_{{interface.net}}_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: {{interface.net}}_network }
+      fixed_ips:
+        - ip_address: "{{ interface.ip }}"
+  {% endfor %}
+
+
+  {% for interface in interfaces %}
+  {{name}}_{{interface.net}}_router_if:
+    type: OS::Neutron::RouterInterface
+    properties:
+        router: { get_resource: {{ name }}_router }
+        port: { get_resource: {{ name }}_{{ interface.net}}_port }
+  {% endfor %}
+

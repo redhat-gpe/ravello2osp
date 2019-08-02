@@ -1,0 +1,8 @@
+  {{net}}_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "{{ name }}"
+      network_id: { get_resource: {{ net }}_network }
+      cidr: "{{ cidr }}"
+      gateway_ip: "{{ gateway }}"
+
