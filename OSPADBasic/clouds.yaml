@@ -1,0 +1,20 @@
+clouds:
+  openstack:
+    auth:
+      auth_url: http://10.115.173.22:5000/v3
+      project_name: admin
+      username: admin 
+      password: QhyBmT4wgqe9YjJUyfVyQBcwt
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: regionOne
+  openstack-project:
+    auth:
+      auth_url: http://10.115.173.22:5000/v3
+      project_name: ospadbasic
+      username: admin 
+      password: QhyBmT4wgqe9YjJUyfVyQBcwt
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: regionOne
+ 

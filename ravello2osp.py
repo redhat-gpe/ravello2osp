@@ -89,7 +89,9 @@ def generate_subnets():
   for subnet in network_config["subnets"]:
     network = get_network_name_from_segment_id(subnet["networkSegmentId"])
     subnets_networks.append(network)
-    gw = get_gateway(subnet["ipConfigurationIds"])
+    gw = ""
+    if "ipConfigurationIds" in subnet:
+      gw = get_gateway(subnet["ipConfigurationIds"])
     if debug:
       print("Create subnet %s/%s on network %s" % (subnet["net"], subnet["mask"],get_network_name_from_segment_id(subnet["networkSegmentId"])))
       print("Gateway: %s" % (get_gateway(subnet["ipConfigurationIds"])))
@@ -107,6 +109,7 @@ def get_gateway(configIds):
           if ifconfig["id"] == ipconfig:
             if not is_dns_server_ip(ifconfig["id"]):
               return ifconfig["staticIpConfig"]["ip"]
+    return ""
 
 def is_dns_server_ip(id):
   for dns_servers in  network_config["services"]["dnsServers"]:
@@ -142,20 +145,12 @@ def generate_routers():
 
 def get_root_disk_size(vm):
   for disk in vm["hardDrives"]:
-    if disk["index"] == 0 and disk["type"] == "DISK":
-      return disk["size"]["value"]
-
-  for disk in vm["hardDrives"]:
-    if disk["index"] == 1 and disk["type"] == "DISK":
+    if disk["boot"] and disk["type"] == "DISK":
       return disk["size"]["value"]
 
 def get_root_disk_name(vm):
   for disk in vm["hardDrives"]:
-    if disk["index"] == 0 and disk["type"] == "DISK":
-      return disk["name"]
-
-  for disk in vm["hardDrives"]:
-    if disk["index"] == 1 and disk["type"] == "DISK":
+    if disk["boot"] and disk["type"] == "DISK":
       return disk["name"]
 
 
@@ -191,6 +186,8 @@ def generate_vms():
     trunks[vm["name"]] = []
     for network in sorted(vm["networkConnections"], key=lambda k: k["device"]["index"]):
       ip_address = get_port_ip_address(network["ipConfig"]["id"]) if "ipConfig" in network else ""
+      if "mac" not in network["device"]:
+        network["device"]["mac"] = network["device"]["generatedMac"]
       if debug:
         print("Create network device with mac %s on network %s with ip %s" 
           % (network["device"]["mac"], find_device_network(network["id"]),ip_address))
@@ -209,22 +206,41 @@ def generate_vms():
            "subports": network["vlanInterfaces"],
            "index": network["device"]["index"]
            })
-    disks = []
+    images = []
+    volumes = []
+    cdrom = ""
     for disk in sorted(vm["hardDrives"], key=lambda k: k["index"]):
+      size = disk["size"]["value"]*1024 if (disk["size"]["unit"]=="GB") else disk["size"]["value"]
+      voltype="volume"
       if disk["type"] == "DISK":
-        size = disk["size"]["value"]*1024 if (disk["size"]["unit"]=="GB") else disk["size"]["value"]
         if debug:
           print("Add disk %s" % (disk["name"]))
-        disks.append({"name": disk["name"], "size": size, "id": disk["id"], "vm": vm["name"]})
+        if get_root_disk_name(vm) == disk["name"]:
+          voltype="image"
+          images.append({"name": disk["name"], "size": size, "id": disk["id"], "vm": vm["name"]})
+        else:
+          volumes.append({"name": disk["name"], "size": size, "id": disk["id"], "vm": vm["name"]})
       else:
         print("Add cdrom %s" % (disk["name"]))
+        images.append({"name": disk["name"], "size": size, "id": disk["id"], "vm": vm["name"]})
+        cdrom = disk["name"]
+        #voltype="image"
       diskimagename="%s-%s" % (vm["name"], disk["name"])
       bpdisk = client.get_diskimages(filter={"name": diskimagename})
       if bpdisk:
         client.delete_diskimage(bpdisk[0]["id"])
-      disks_created.append(client.create_diskimage({"diskId": disk["id"], "vmId": vm["id"], "diskImage": { "name": diskimagename}, "applicationId": bp["id"], "blueprint": "true", "offline": "false"}))
+      disks_created.append([voltype,client.create_diskimage({"diskId": disk["id"], "vmId": vm["id"], "diskImage": { "name": diskimagename}, "applicationId": bp["id"], "blueprint": "true", "offline": "false"})])
 
-    vms[vm["name"]] = {"flavor": name_flavor, "network": networks, "disk": disks, "vm": vm}
+
+    vmdesc = ""
+    if "description" in vm:
+      vmdesc = vm["description"]
+    vmuserdata = ""
+    if "userData" in vm:
+      vmuserdata = vm["userData"]
+    vms[vm["name"]] = {"flavor": name_flavor, "network": networks, "volumes": volumes, "images": images, "vm": vm, "description": vmdesc, "userdata": vmuserdata, "cdrom": cdrom}
+   
+
   for flavor,res in flavors.items():
     tplflavor = env.get_template('flavor.j2')
     stack_user += tplflavor.render(name=flavor, cpu=res["cpu"], memory=res["memory"], disk=res["disk"])
@@ -244,7 +260,13 @@ def generate_vms():
 
   for vm,data in vms.items():
     tplvm = env.get_template('server.j2')
-    stack_user += tplvm.render(name=vm, flavor=data["flavor"], nics=networks[vm], root_disk=get_root_disk_name(data["vm"]))
+    print("userdata2:" + data["userdata"])
+    stack_user += tplvm.render(name=vm, description=data["description"], flavor=data["flavor"], nics=networks[vm], root_disk=get_root_disk_name(data["vm"]), userdata=data["userdata"], cdrom=data["cdrom"])
+
+  for vm, data in vms.items():
+    for volume in data["volumes"]:
+      tplvol = env.get_template('volume.j2')
+      stack_user += tplvol.render(vm=volume["vm"], volume=volume["name"])
 
 
 generate_networks()
@@ -277,10 +299,14 @@ if len(vm["hardDrives"]) > 1:
 
 # Add new disks
 i=1
-import_disks = []
-for disk in disks_created:
+import_images = []
+import_volumes= []
+for voltype, disk in disks_created:
   vm["hardDrives"].append({"name": disk["name"], "baseDiskImageId": disk["id"], "baseDiskImageName": disk["name"], "type": "DISK", "controllerIndex": i, "size": disk["size"], "controller": "VIRTIO"})
-  import_disks.append({"device": "vd%s" % chr(97+i), "name":  disk["name"]})
+  if voltype == "image":
+    import_images.append({"device": "vd%s" % chr(97+i), "name":  disk["name"], "size": disk["size"]["value"]})
+  else:
+    import_volumes.append({"device": "vd%s" % chr(97+i), "name":  disk["name"], "size": disk["size"]["value"]})
   i=i+1
 client.update_vm(app, vm)
 client.publish_application_updates(app)
@@ -289,7 +315,7 @@ client.reload(vm)
 
 
 tplimportdisks = env.get_template('import_disks.j2')
-import_disks = tplimportdisks.render(disks=import_disks)
+import_disks = tplimportdisks.render(images=import_images, volumes=import_volumes)
 
 print("INFO: Generated %s" % (output_dir + "/playbook_import_disks.yaml"))
 fp = open(output_dir + "/playbook_import_disks.yaml", "w")

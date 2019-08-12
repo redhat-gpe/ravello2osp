@@ -1,0 +1,924 @@
+heat_template_version: 2016-10-14
+description: Create a project
+parameters:
+  project_name:
+    type: string
+    description: Name of the project
+  project_description:
+    type: string
+    description: Name of the project
+    default: An GPTE project
+resources:
+  Management_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Management"
+      shared: false
+  Trunk_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk"
+      shared: false
+  Trunk_vlan5_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk_vlan5"
+      shared: false
+  Trunk_vlan10_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk_vlan10"
+      shared: false
+  Trunk_vlan100_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk_vlan100"
+      shared: false
+  Public_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Public"
+      shared: false
+  Management_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Management"
+      network_id: { get_resource: Management_network }
+      cidr: "192.168.0.40/24"
+      gateway_ip: "192.168.0.1"
+  Public_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Public"
+      network_id: { get_resource: Public_network }
+      cidr: "10.0.0.0/8"
+      gateway_ip: "10.0.0.1"
+  Trunk_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Trunk"
+      network_id: { get_resource: Trunk_network }
+      cidr: "1.1.1.1/8"
+      gateway_ip: ""
+  Router0_router:
+    type: OS::Neutron::Router
+    properties:
+      name: "Router0"
+
+  
+  Router0_Management_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Management_network }
+      fixed_ips:
+        - ip_address: "192.168.0.1"
+  
+  Router0_Public_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Public_network }
+      fixed_ips:
+        - ip_address: "10.0.0.1"
+  
+
+
+  
+  Router0_Management_router_if:
+    type: OS::Neutron::RouterInterface
+    properties:
+        router: { get_resource: Router0_router }
+        port: { get_resource: Router0_Management_port }
+  
+  Router0_Public_router_if:
+    type: OS::Neutron::RouterInterface
+    properties:
+        router: { get_resource: Router0_router }
+        port: { get_resource: Router0_Public_port }
+  
+  CPU_1_Memory_2048_Disk_10_flavor:
+    type: OS::Nova::Flavor
+    properties:
+      ram: "2048"
+      vcpus: "1"
+      disk: "10"
+      name: "CPU_1_Memory_2048_Disk_10"
+      is_public: False
+  CPU_4_Memory_8192_Disk_30_flavor:
+    type: OS::Nova::Flavor
+    properties:
+      ram: "8192"
+      vcpus: "4"
+      disk: "30"
+      name: "CPU_4_Memory_8192_Disk_30"
+      is_public: False
+  2Compute Node 00-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Management_network }
+      mac_address: "2c:c2:60:72:80:b6"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Management_subnet}, ip_address: "192.168.0.30"}
+      
+  2Compute Node 00-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:44:0f:bc"
+      port_security_enabled: false
+      
+  2Compute Node 00-2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:6e:94:d0"
+      port_security_enabled: false
+      
+  2Compute Node 00-3_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Public_network }
+      mac_address: "2c:c2:60:79:92:a6"
+      port_security_enabled: false
+      
+  4Network Node 00-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Management_network }
+      mac_address: "2c:c2:60:05:f4:30"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Management_subnet}, ip_address: "192.168.0.50"}
+      
+  4Network Node 00-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:7e:53:e0"
+      port_security_enabled: false
+      
+  4Network Node 00-2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:49:c7:f0"
+      port_security_enabled: false
+      
+  4Network Node 00-3_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Public_network }
+      mac_address: "2c:c2:60:5f:98:b7"
+      port_security_enabled: false
+      
+  9Storage-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Management_network }
+      mac_address: "2c:c2:60:69:c3:cc"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Management_subnet}, ip_address: "192.168.0.40"}
+      
+  9Storage-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:50:66:92"
+      port_security_enabled: false
+      
+  9Storage-2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:20:4a:63"
+      port_security_enabled: false
+      
+  5Network Node 01-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Management_network }
+      mac_address: "2c:c2:60:05:f4:31"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Management_subnet}, ip_address: "192.168.0.51"}
+      
+  5Network Node 01-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:7e:53:e1"
+      port_security_enabled: false
+      
+  5Network Node 01-2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:49:c7:f1"
+      port_security_enabled: false
+      
+  5Network Node 01-3_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Public_network }
+      mac_address: "2c:c2:60:54:ed:d4"
+      port_security_enabled: false
+      
+  6Network Node 02-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Management_network }
+      mac_address: "2c:c2:60:5d:68:f3"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Management_subnet}, ip_address: "192.168.0.52"}
+      
+  6Network Node 02-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:41:0f:78"
+      port_security_enabled: false
+      
+  6Network Node 02-2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:01:33:23"
+      port_security_enabled: false
+      
+  6Network Node 02-3_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Public_network }
+      mac_address: "2c:c2:60:13:22:52"
+      port_security_enabled: false
+      
+  3Compute Node 01-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Management_network }
+      mac_address: "2c:c2:60:35:7d:72"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Management_subnet}, ip_address: "192.168.0.31"}
+      
+  3Compute Node 01-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:3f:92:66"
+      port_security_enabled: false
+      
+  3Compute Node 01-2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:25:eb:70"
+      port_security_enabled: false
+      
+  3Compute Node 01-3_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Public_network }
+      mac_address: "2c:c2:60:44:dc:aa"
+      port_security_enabled: false
+      
+  1Controller-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Management_network }
+      mac_address: "2c:c2:60:12:1d:b3"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Management_subnet}, ip_address: "192.168.0.20"}
+      
+  1Controller-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:75:45:c7"
+      port_security_enabled: false
+      
+  1Controller-2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:35:33:8a"
+      port_security_enabled: false
+      
+  1Controller-3_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Public_network }
+      mac_address: "2c:c2:60:74:18:b1"
+      port_security_enabled: false
+      
+  0Workstation-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Management_network }
+      mac_address: "2c:c2:60:48:bd:62"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Management_subnet}, ip_address: "192.168.0.5"}
+      
+  0Workstation-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Public_network }
+      mac_address: "2c:c2:60:07:a3:49"
+      port_security_enabled: false
+      
+  
+  2Compute Node 00-1_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:44:0f:bc"
+      port_security_enabled: False
+  
+  2Compute Node 00-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:44:0f:bc"
+      port_security_enabled: False
+  
+  2Compute Node 00-1_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:44:0f:bc"
+      port_security_enabled: False
+  
+  2Compute Node 00-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 2Compute Node 00-1
+      port: { get_resource: 2Compute Node 00-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 2Compute Node 00-1_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 2Compute Node 00-1_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 2Compute Node 00-1_vlan100_port } }
+      
+  
+  2Compute Node 00-2_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:6e:94:d0"
+      port_security_enabled: False
+  
+  2Compute Node 00-2_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:6e:94:d0"
+      port_security_enabled: False
+  
+  2Compute Node 00-2_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:6e:94:d0"
+      port_security_enabled: False
+  
+  2Compute Node 00-2_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 2Compute Node 00-2
+      port: { get_resource: 2Compute Node 00-2_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 2Compute Node 00-2_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 2Compute Node 00-2_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 2Compute Node 00-2_vlan100_port } }
+      
+  
+  4Network Node 00-1_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:7e:53:e0"
+      port_security_enabled: False
+  
+  4Network Node 00-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:7e:53:e0"
+      port_security_enabled: False
+  
+  4Network Node 00-1_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:7e:53:e0"
+      port_security_enabled: False
+  
+  4Network Node 00-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 4Network Node 00-1
+      port: { get_resource: 4Network Node 00-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 4Network Node 00-1_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 4Network Node 00-1_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 4Network Node 00-1_vlan100_port } }
+      
+  
+  4Network Node 00-2_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:49:c7:f0"
+      port_security_enabled: False
+  
+  4Network Node 00-2_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:49:c7:f0"
+      port_security_enabled: False
+  
+  4Network Node 00-2_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:49:c7:f0"
+      port_security_enabled: False
+  
+  4Network Node 00-2_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 4Network Node 00-2
+      port: { get_resource: 4Network Node 00-2_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 4Network Node 00-2_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 4Network Node 00-2_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 4Network Node 00-2_vlan100_port } }
+      
+  
+  9Storage-1_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:50:66:92"
+      port_security_enabled: False
+  
+  9Storage-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 9Storage-1
+      port: { get_resource: 9Storage-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 9Storage-1_vlan100_port } }
+      
+  
+  9Storage-2_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:20:4a:63"
+      port_security_enabled: False
+  
+  9Storage-2_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 9Storage-2
+      port: { get_resource: 9Storage-2_port }
+      sub_ports:
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 9Storage-2_vlan100_port } }
+      
+  
+  5Network Node 01-1_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:7e:53:e1"
+      port_security_enabled: False
+  
+  5Network Node 01-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:7e:53:e1"
+      port_security_enabled: False
+  
+  5Network Node 01-1_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:7e:53:e1"
+      port_security_enabled: False
+  
+  5Network Node 01-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 5Network Node 01-1
+      port: { get_resource: 5Network Node 01-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 5Network Node 01-1_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 5Network Node 01-1_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 5Network Node 01-1_vlan100_port } }
+      
+  
+  5Network Node 01-2_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:49:c7:f1"
+      port_security_enabled: False
+  
+  5Network Node 01-2_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:49:c7:f1"
+      port_security_enabled: False
+  
+  5Network Node 01-2_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:49:c7:f1"
+      port_security_enabled: False
+  
+  5Network Node 01-2_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 5Network Node 01-2
+      port: { get_resource: 5Network Node 01-2_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 5Network Node 01-2_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 5Network Node 01-2_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 5Network Node 01-2_vlan100_port } }
+      
+  
+  6Network Node 02-1_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:41:0f:78"
+      port_security_enabled: False
+  
+  6Network Node 02-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:41:0f:78"
+      port_security_enabled: False
+  
+  6Network Node 02-1_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:41:0f:78"
+      port_security_enabled: False
+  
+  6Network Node 02-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 6Network Node 02-1
+      port: { get_resource: 6Network Node 02-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 6Network Node 02-1_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 6Network Node 02-1_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 6Network Node 02-1_vlan100_port } }
+      
+  
+  6Network Node 02-2_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:01:33:23"
+      port_security_enabled: False
+  
+  6Network Node 02-2_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:01:33:23"
+      port_security_enabled: False
+  
+  6Network Node 02-2_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:01:33:23"
+      port_security_enabled: False
+  
+  6Network Node 02-2_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 6Network Node 02-2
+      port: { get_resource: 6Network Node 02-2_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 6Network Node 02-2_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 6Network Node 02-2_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 6Network Node 02-2_vlan100_port } }
+      
+  
+  3Compute Node 01-1_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:3f:92:66"
+      port_security_enabled: False
+  
+  3Compute Node 01-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:3f:92:66"
+      port_security_enabled: False
+  
+  3Compute Node 01-1_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:3f:92:66"
+      port_security_enabled: False
+  
+  3Compute Node 01-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 3Compute Node 01-1
+      port: { get_resource: 3Compute Node 01-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 3Compute Node 01-1_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 3Compute Node 01-1_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 3Compute Node 01-1_vlan100_port } }
+      
+  
+  3Compute Node 01-2_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:25:eb:70"
+      port_security_enabled: False
+  
+  3Compute Node 01-2_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:25:eb:70"
+      port_security_enabled: False
+  
+  3Compute Node 01-2_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:25:eb:70"
+      port_security_enabled: False
+  
+  3Compute Node 01-2_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 3Compute Node 01-2
+      port: { get_resource: 3Compute Node 01-2_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 3Compute Node 01-2_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 3Compute Node 01-2_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 3Compute Node 01-2_vlan100_port } }
+      
+  
+  1Controller-1_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:75:45:c7"
+      port_security_enabled: False
+  
+  1Controller-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:75:45:c7"
+      port_security_enabled: False
+  
+  1Controller-1_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:75:45:c7"
+      port_security_enabled: False
+  
+  1Controller-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 1Controller-1
+      port: { get_resource: 1Controller-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 1Controller-1_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 1Controller-1_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 1Controller-1_vlan100_port } }
+      
+  
+  1Controller-2_vlan5_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan5_network }
+      mac_address: "2c:c2:60:35:33:8a"
+      port_security_enabled: False
+  
+  1Controller-2_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:35:33:8a"
+      port_security_enabled: False
+  
+  1Controller-2_vlan100_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan100_network }
+      mac_address: "2c:c2:60:35:33:8a"
+      port_security_enabled: False
+  
+  1Controller-2_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 1Controller-2
+      port: { get_resource: 1Controller-2_port }
+      sub_ports:
+      
+        - {"segmentation_id": 5 , "segmentation_type": "vlan", "port": { get_resource: 1Controller-2_vlan5_port } }
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 1Controller-2_vlan10_port } }
+      
+        - {"segmentation_id": 100 , "segmentation_type": "vlan", "port": { get_resource: 1Controller-2_vlan100_port } }
+      
+  2Compute Node 00_server:
+    type: OS::Nova::Server
+    properties:
+      name: "2Compute Node 00"
+      image: "2Compute Node 00-root"
+      flavor: { get_resource: CPU_4_Memory_8192_Disk_30_flavor }
+      metadata: { "description": "" }
+      networks:
+        
+        - port: { get_resource: 2Compute Node 00-0_port}
+        
+        - port: { get_resource: 2Compute Node 00-1_port}
+        
+        - port: { get_resource: 2Compute Node 00-2_port}
+        
+        - port: { get_resource: 2Compute Node 00-3_port}
+        
+  4Network Node 00_server:
+    type: OS::Nova::Server
+    properties:
+      name: "4Network Node 00"
+      image: "4Network Node 00-root"
+      flavor: { get_resource: CPU_4_Memory_8192_Disk_30_flavor }
+      metadata: { "description": "" }
+      networks:
+        
+        - port: { get_resource: 4Network Node 00-0_port}
+        
+        - port: { get_resource: 4Network Node 00-1_port}
+        
+        - port: { get_resource: 4Network Node 00-2_port}
+        
+        - port: { get_resource: 4Network Node 00-3_port}
+        
+  9Storage_server:
+    type: OS::Nova::Server
+    properties:
+      name: "9Storage"
+      image: "9Storage-root"
+      flavor: { get_resource: CPU_1_Memory_2048_Disk_10_flavor }
+      metadata: { "description": "" }
+      networks:
+        
+        - port: { get_resource: 9Storage-0_port}
+        
+        - port: { get_resource: 9Storage-1_port}
+        
+        - port: { get_resource: 9Storage-2_port}
+        
+  5Network Node 01_server:
+    type: OS::Nova::Server
+    properties:
+      name: "5Network Node 01"
+      image: "5Network Node 01-root"
+      flavor: { get_resource: CPU_4_Memory_8192_Disk_30_flavor }
+      metadata: { "description": "" }
+      networks:
+        
+        - port: { get_resource: 5Network Node 01-0_port}
+        
+        - port: { get_resource: 5Network Node 01-1_port}
+        
+        - port: { get_resource: 5Network Node 01-2_port}
+        
+        - port: { get_resource: 5Network Node 01-3_port}
+        
+  6Network Node 02_server:
+    type: OS::Nova::Server
+    properties:
+      name: "6Network Node 02"
+      image: "6Network Node 02-root"
+      flavor: { get_resource: CPU_4_Memory_8192_Disk_30_flavor }
+      metadata: { "description": "" }
+      networks:
+        
+        - port: { get_resource: 6Network Node 02-0_port}
+        
+        - port: { get_resource: 6Network Node 02-1_port}
+        
+        - port: { get_resource: 6Network Node 02-2_port}
+        
+        - port: { get_resource: 6Network Node 02-3_port}
+        
+  3Compute Node 01_server:
+    type: OS::Nova::Server
+    properties:
+      name: "3Compute Node 01"
+      image: "3Compute Node 01-root"
+      flavor: { get_resource: CPU_4_Memory_8192_Disk_30_flavor }
+      metadata: { "description": "" }
+      networks:
+        
+        - port: { get_resource: 3Compute Node 01-0_port}
+        
+        - port: { get_resource: 3Compute Node 01-1_port}
+        
+        - port: { get_resource: 3Compute Node 01-2_port}
+        
+        - port: { get_resource: 3Compute Node 01-3_port}
+        
+  1Controller_server:
+    type: OS::Nova::Server
+    properties:
+      name: "1Controller"
+      image: "1Controller-root"
+      flavor: { get_resource: CPU_4_Memory_8192_Disk_30_flavor }
+      metadata: { "description": "" }
+      networks:
+        
+        - port: { get_resource: 1Controller-0_port}
+        
+        - port: { get_resource: 1Controller-1_port}
+        
+        - port: { get_resource: 1Controller-2_port}
+        
+        - port: { get_resource: 1Controller-3_port}
+        
+  0Workstation_server:
+    type: OS::Nova::Server
+    properties:
+      name: "0Workstation"
+      image: "0Workstation-root"
+      flavor: { get_resource: CPU_1_Memory_2048_Disk_10_flavor }
+      metadata: { "description": "" }
+      networks:
+        
+        - port: { get_resource: 0Workstation-0_port}
+        
+        - port: { get_resource: 0Workstation-1_port}
+        

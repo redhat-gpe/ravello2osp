@@ -4,6 +4,11 @@
       name: "{{ name }}"
       image: "{{ name }}-{{root_disk}}"
       flavor: { get_resource: {{ flavor }}_flavor }
+      metadata: { "description": "{{ description }}", "cdrom": "{{name-}}-{{cdrom}}"  }
+      {% if userdata|length %}
+      user_data: |
+        {{ userdata|replace("\n","\n        ") }}
+      {% endif %}
       networks:
         {% for nic in nics %}
         - port: { get_resource: {{name}}-{{loop.index-1}}_port}

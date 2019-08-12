@@ -1,0 +1,529 @@
+heat_template_version: 2016-10-14
+description: Create a project
+parameters:
+  project_name:
+    type: string
+    description: Name of the project
+  project_description:
+    type: string
+    description: Name of the project
+    default: An GPTE project
+resources:
+  Provisioning_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Provisioning"
+      shared: false
+  Trunk_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk"
+      shared: false
+  Trunk_vlan10_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk_vlan10"
+      shared: false
+  Trunk_vlan40_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk_vlan40"
+      shared: false
+  Trunk_vlan50_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk_vlan50"
+      shared: false
+  Trunk_vlan20_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk_vlan20"
+      shared: false
+  Trunk_vlan30_network:
+    type: OS::Neutron::Net
+    properties:
+      name: "Trunk_vlan30"
+      shared: false
+  Provisioning_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Provisioning"
+      network_id: { get_resource: Provisioning_network }
+      cidr: "192.0.2.253/24"
+      gateway_ip: ""
+  Trunk_vlan10_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Trunk_vlan10"
+      network_id: { get_resource: Trunk_vlan10_network }
+      cidr: "10.0.0.0/24"
+      gateway_ip: "10.0.0.1"
+  Trunk_vlan20_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Trunk_vlan20"
+      network_id: { get_resource: Trunk_vlan20_network }
+      cidr: "172.17.0.0/24"
+      gateway_ip: ""
+  Trunk_vlan30_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Trunk_vlan30"
+      network_id: { get_resource: Trunk_vlan30_network }
+      cidr: "172.18.0.0/24"
+      gateway_ip: ""
+  Trunk_vlan40_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Trunk_vlan40"
+      network_id: { get_resource: Trunk_vlan40_network }
+      cidr: "172.19.0.0/24"
+      gateway_ip: ""
+  Trunk_vlan50_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Trunk_vlan50"
+      network_id: { get_resource: Trunk_vlan50_network }
+      cidr: "172.16.0.0/24"
+      gateway_ip: ""
+  Trunk_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: "sub-Trunk"
+      network_id: { get_resource: Trunk_network }
+      cidr: "1.1.1.1/8"
+      gateway_ip: ""
+  Router0_router:
+    type: OS::Neutron::Router
+    properties:
+      name: "Router0"
+
+  
+  Router0_Provisioning_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Provisioning_network }
+      fixed_ips:
+        - ip_address: "192.0.2.254"
+  
+  Router0_Trunk_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      fixed_ips:
+        - ip_address: "10.0.0.1"
+  
+
+
+  
+  Router0_Provisioning_router_if:
+    type: OS::Neutron::RouterInterface
+    properties:
+        router: { get_resource: Router0_router }
+        port: { get_resource: Router0_Provisioning_port }
+  
+  Router0_Trunk_vlan10_router_if:
+    type: OS::Neutron::RouterInterface
+    properties:
+        router: { get_resource: Router0_router }
+        port: { get_resource: Router0_Trunk_vlan10_port }
+  
+  CPU_2_Memory_4096_Disk_50_flavor:
+    type: OS::Nova::Flavor
+    properties:
+      ram: "4096"
+      vcpus: "2"
+      disk: "50"
+      name: "CPU_2_Memory_4096_Disk_50"
+      is_public: False
+  CPU_1_Memory_1024_Disk_20_flavor:
+    type: OS::Nova::Flavor
+    properties:
+      ram: "1024"
+      vcpus: "1"
+      disk: "20"
+      name: "CPU_1_Memory_1024_Disk_20"
+      is_public: False
+  CPU_2_Memory_8192_Disk_60_flavor:
+    type: OS::Nova::Flavor
+    properties:
+      ram: "8192"
+      vcpus: "2"
+      disk: "60"
+      name: "CPU_2_Memory_8192_Disk_60"
+      is_public: False
+  CPU_4_Memory_18432_Disk_50_flavor:
+    type: OS::Nova::Flavor
+    properties:
+      ram: "18432"
+      vcpus: "4"
+      disk: "50"
+      name: "CPU_4_Memory_18432_Disk_50"
+      is_public: False
+  ipmi-host-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Provisioning_network }
+      mac_address: "2c:c2:60:01:02:fd"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Provisioning_subnet}, ip_address: "192.0.2.253"}
+      
+  1undercloud-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Provisioning_network }
+      mac_address: "2c:c2:60:01:01:01"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Provisioning_subnet}, ip_address: "192.0.2.1"}
+      
+  3compute01-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Provisioning_network }
+      mac_address: "2c:c2:60:01:02:05"
+      port_security_enabled: false
+      
+  3compute01-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:45:c5:66"
+      port_security_enabled: false
+      
+  3compute02-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Provisioning_network }
+      mac_address: "2c:c2:60:01:02:06"
+      port_security_enabled: false
+      
+  3compute02-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:60:a6:f1"
+      port_security_enabled: false
+      
+  0Workstation-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Provisioning_network }
+      mac_address: "2c:c2:60:29:83:44"
+      port_security_enabled: false
+      
+      fixed_ips:
+        - {subnet: {get_resource: Provisioning_subnet}, ip_address: "192.0.2.252"}
+      
+  0Workstation-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:1b:2c:d2"
+      port_security_enabled: false
+      
+  2ctrl01-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Provisioning_network }
+      mac_address: "2c:c2:60:01:02:02"
+      port_security_enabled: false
+      
+  2ctrl01-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_network }
+      mac_address: "2c:c2:60:1f:6d:0e"
+      port_security_enabled: false
+      
+  
+  3compute01-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:45:c5:66"
+      port_security_enabled: False
+  
+  3compute01-1_vlan40_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan40_network }
+      mac_address: "2c:c2:60:45:c5:66"
+      port_security_enabled: False
+  
+  3compute01-1_vlan50_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan50_network }
+      mac_address: "2c:c2:60:45:c5:66"
+      port_security_enabled: False
+  
+  3compute01-1_vlan20_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan20_network }
+      mac_address: "2c:c2:60:45:c5:66"
+      port_security_enabled: False
+  
+  3compute01-1_vlan30_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan30_network }
+      mac_address: "2c:c2:60:45:c5:66"
+      port_security_enabled: False
+  
+  3compute01-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 3compute01-1
+      port: { get_resource: 3compute01-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 3compute01-1_vlan10_port } }
+      
+        - {"segmentation_id": 40 , "segmentation_type": "vlan", "port": { get_resource: 3compute01-1_vlan40_port } }
+      
+        - {"segmentation_id": 50 , "segmentation_type": "vlan", "port": { get_resource: 3compute01-1_vlan50_port } }
+      
+        - {"segmentation_id": 20 , "segmentation_type": "vlan", "port": { get_resource: 3compute01-1_vlan20_port } }
+      
+        - {"segmentation_id": 30 , "segmentation_type": "vlan", "port": { get_resource: 3compute01-1_vlan30_port } }
+      
+  
+  3compute02-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:60:a6:f1"
+      port_security_enabled: False
+  
+  3compute02-1_vlan40_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan40_network }
+      mac_address: "2c:c2:60:60:a6:f1"
+      port_security_enabled: False
+  
+  3compute02-1_vlan50_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan50_network }
+      mac_address: "2c:c2:60:60:a6:f1"
+      port_security_enabled: False
+  
+  3compute02-1_vlan20_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan20_network }
+      mac_address: "2c:c2:60:60:a6:f1"
+      port_security_enabled: False
+  
+  3compute02-1_vlan30_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan30_network }
+      mac_address: "2c:c2:60:60:a6:f1"
+      port_security_enabled: False
+  
+  3compute02-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 3compute02-1
+      port: { get_resource: 3compute02-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 3compute02-1_vlan10_port } }
+      
+        - {"segmentation_id": 40 , "segmentation_type": "vlan", "port": { get_resource: 3compute02-1_vlan40_port } }
+      
+        - {"segmentation_id": 50 , "segmentation_type": "vlan", "port": { get_resource: 3compute02-1_vlan50_port } }
+      
+        - {"segmentation_id": 20 , "segmentation_type": "vlan", "port": { get_resource: 3compute02-1_vlan20_port } }
+      
+        - {"segmentation_id": 30 , "segmentation_type": "vlan", "port": { get_resource: 3compute02-1_vlan30_port } }
+      
+  
+  0Workstation-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:1b:2c:d2"
+      port_security_enabled: False
+  
+  0Workstation-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 0Workstation-1
+      port: { get_resource: 0Workstation-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 0Workstation-1_vlan10_port } }
+      
+  
+  2ctrl01-1_vlan10_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan10_network }
+      mac_address: "2c:c2:60:1f:6d:0e"
+      port_security_enabled: False
+  
+  2ctrl01-1_vlan40_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan40_network }
+      mac_address: "2c:c2:60:1f:6d:0e"
+      port_security_enabled: False
+  
+  2ctrl01-1_vlan50_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan50_network }
+      mac_address: "2c:c2:60:1f:6d:0e"
+      port_security_enabled: False
+  
+  2ctrl01-1_vlan20_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan20_network }
+      mac_address: "2c:c2:60:1f:6d:0e"
+      port_security_enabled: False
+  
+  2ctrl01-1_vlan30_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Trunk_vlan30_network }
+      mac_address: "2c:c2:60:1f:6d:0e"
+      port_security_enabled: False
+  
+  2ctrl01-1_trunk:
+    type: OS::Neutron::Trunk
+    properties:
+      name: 2ctrl01-1
+      port: { get_resource: 2ctrl01-1_port }
+      sub_ports:
+      
+        - {"segmentation_id": 10 , "segmentation_type": "vlan", "port": { get_resource: 2ctrl01-1_vlan10_port } }
+      
+        - {"segmentation_id": 40 , "segmentation_type": "vlan", "port": { get_resource: 2ctrl01-1_vlan40_port } }
+      
+        - {"segmentation_id": 50 , "segmentation_type": "vlan", "port": { get_resource: 2ctrl01-1_vlan50_port } }
+      
+        - {"segmentation_id": 20 , "segmentation_type": "vlan", "port": { get_resource: 2ctrl01-1_vlan20_port } }
+      
+        - {"segmentation_id": 30 , "segmentation_type": "vlan", "port": { get_resource: 2ctrl01-1_vlan30_port } }
+      
+  ipmi-host_server:
+    type: OS::Nova::Server
+    properties:
+      name: "ipmi-host"
+      image: "ipmi-host-boot"
+      flavor: { get_resource: CPU_1_Memory_1024_Disk_20_flavor }
+      metadata: { "description": "", "cdrom": "ipmi-host-"  }
+      
+      user_data: |
+        #!/bin/bash
+        mkdir -p /etc/ravellobmc;echo "ephTok=ezGsqNLN2rRvITSU5WSkdcge8MACStSN7wayRr1G2Ay2YVTmTpZh5Sac3H4TJW2t" > /etc/ravellobmc/ravellobmc.conf
+        
+      
+      networks:
+        
+        - port: { get_resource: ipmi-host-0_port}
+        
+  1undercloud_server:
+    type: OS::Nova::Server
+    properties:
+      name: "1undercloud"
+      image: "1undercloud-vda"
+      flavor: { get_resource: CPU_4_Memory_18432_Disk_50_flavor }
+      metadata: { "description": "cloudinitclobber:false", "cdrom": "1undercloud-"  }
+      
+      user_data: |
+        #cloud-config
+        ssh_pwauth: True
+        disable_root: False
+        users:
+          - name: root
+        chpasswd:
+          list: |
+            root:r3dh4t1!
+          expire: False
+      
+      networks:
+        
+        - port: { get_resource: 1undercloud-0_port}
+        
+  3compute01_server:
+    type: OS::Nova::Server
+    properties:
+      name: "3compute01"
+      image: "3compute01-sda"
+      flavor: { get_resource: CPU_2_Memory_4096_Disk_50_flavor }
+      metadata: { "description": "powerdown:true
+ipmiaddr:192.0.2.224
+ipmipw:redhat", "cdrom": "3compute01-CDROM"  }
+      
+      networks:
+        
+        - port: { get_resource: 3compute01-0_port}
+        
+        - port: { get_resource: 3compute01-1_port}
+        
+  3compute02_server:
+    type: OS::Nova::Server
+    properties:
+      name: "3compute02"
+      image: "3compute02-sda"
+      flavor: { get_resource: CPU_2_Memory_4096_Disk_50_flavor }
+      metadata: { "description": "powerdown:true
+ipmiaddr:192.0.2.225
+ipmipw:redhat", "cdrom": "3compute02-CDROM"  }
+      
+      networks:
+        
+        - port: { get_resource: 3compute02-0_port}
+        
+        - port: { get_resource: 3compute02-1_port}
+        
+  0Workstation_server:
+    type: OS::Nova::Server
+    properties:
+      name: "0Workstation"
+      image: "0Workstation-boot"
+      flavor: { get_resource: CPU_1_Memory_1024_Disk_20_flavor }
+      metadata: { "description": "", "cdrom": "0Workstation-"  }
+      
+      networks:
+        
+        - port: { get_resource: 0Workstation-0_port}
+        
+        - port: { get_resource: 0Workstation-1_port}
+        
+  2ctrl01_server:
+    type: OS::Nova::Server
+    properties:
+      name: "2ctrl01"
+      image: "2ctrl01-sda"
+      flavor: { get_resource: CPU_2_Memory_8192_Disk_60_flavor }
+      metadata: { "description": "powerdown:true
+ipmiaddr:192.0.2.221
+ipmipw:redhat", "cdrom": "2ctrl01-CDROM"  }
+      
+      networks:
+        
+        - port: { get_resource: 2ctrl01-0_port}
+        
+        - port: { get_resource: 2ctrl01-1_port}
+        
+  ipmi-host_volume_repos:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: "ipmi-host"
+      volume_id: "ipmi-host-repos"
+  ipmi-host_volume_registry:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: "ipmi-host"
+      volume_id: "ipmi-host-registry"

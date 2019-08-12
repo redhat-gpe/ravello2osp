@@ -1,0 +1,6 @@
+  {{vm}}_volume_{{volume}}:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: "{{ vm }}"
+      volume_id: "{{ vm }}-{{ volume }}"
+
