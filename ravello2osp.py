@@ -67,6 +67,7 @@ def get_network_name_from_segment_id(id):
 def generate_networks():
   global stack_user
   global networks
+  i=0
   for switch in network_config["switches"]:
     for segment in switch["networkSegments"]:
       if (segment["vlanId"] != 1): #TODO
@@ -74,10 +75,13 @@ def generate_networks():
         if debug:
           print("Create network %s_vlan%s" % (switch["name"], segment["vlanId"]))
       else:
+        if "name" not in switch:
+          switch["name"] = "Network" + str(i)
+          i = i + 1
         network = switch["name"]
         if debug:
           print("Create network %s" % switch["name"])
-      networks.append(switch["name"])
+      networks.append(network)
       tplnetwork = env.get_template('network.j2')
       stack_user += tplnetwork.render(name=network )
 
@@ -112,9 +116,10 @@ def get_gateway(configIds):
     return ""
 
 def is_dns_server_ip(id):
-  for dns_servers in  network_config["services"]["dnsServers"]:
-    if id in dns_servers["ipConfigurationIds"]:
-      return True
+  if "dnsServers" in network_config["services"]:
+    for dns_servers in  network_config["services"]["dnsServers"]:
+      if id in dns_servers["ipConfigurationIds"]:
+        return True
 
 
 
@@ -162,10 +167,11 @@ def find_device_network(id):
 
 
 def get_port_ip_address(id):
-  for dhcp in network_config["services"]["dhcpServers"]:
-    for ip in dhcp["reservedIpEntries"]:
-      if ip["ipConfigurationId"] == id:
-        return ip["ip"]
+  if "dhcpServers" in network_config["services"]:
+    for dhcp in network_config["services"]["dhcpServers"]:
+      for ip in dhcp["reservedIpEntries"]:
+        if ip["ipConfigurationId"] == id:
+          return ip["ip"]
 
     
 def generate_vms():
@@ -302,6 +308,7 @@ i=1
 import_images = []
 import_volumes= []
 for voltype, disk in disks_created:
+  print(disk)
   vm["hardDrives"].append({"name": disk["name"], "baseDiskImageId": disk["id"], "baseDiskImageName": disk["name"], "type": "DISK", "controllerIndex": i, "size": disk["size"], "controller": "VIRTIO"})
   if voltype == "image":
     import_images.append({"device": "vd%s" % chr(97+i), "name":  disk["name"], "size": disk["size"]["value"]})

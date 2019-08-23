@@ -4,7 +4,7 @@
       name: "{{ name }}"
       image: "{{ name }}-{{root_disk}}"
       flavor: { get_resource: {{ flavor }}_flavor }
-      metadata: { "description": "{{ description }}", "cdrom": "{{name-}}-{{cdrom}}"  }
+      metadata: { "description": "{{ description }}"{% if cdrom %}, "cdrom": "{{name-}}-{{cdrom}}"{%endif%}  }
       {% if userdata|length %}
       user_data: |
         {{ userdata|replace("\n","\n        ") }}
