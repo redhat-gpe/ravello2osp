@@ -1,56 +1,62 @@
 heat_template_version: 2016-10-14
 description: Create a project
 parameters:
-  project_name:
+  userdata:
     type: string
-    description: Name of the project
-  project_description:
+    description: cloud-init for workstation
+  public_net_id:
     type: string
-    description: Name of the project
-    default: An GPTE project
+    description: The ID for the floating ip
 resources:
   Provisioning_network:
     type: OS::Neutron::Net
     properties:
       name: "Provisioning"
       shared: false
+      value_specs: {"mtu": 1450}
   Trunk_network:
     type: OS::Neutron::Net
     properties:
       name: "Trunk"
       shared: false
+      value_specs: {"mtu": 1450}
   Trunk_vlan10_network:
     type: OS::Neutron::Net
     properties:
       name: "Trunk_vlan10"
       shared: false
+      value_specs: {"mtu": 1450}
   Trunk_vlan40_network:
     type: OS::Neutron::Net
     properties:
       name: "Trunk_vlan40"
       shared: false
+      value_specs: {"mtu": 1450}
   Trunk_vlan50_network:
     type: OS::Neutron::Net
     properties:
       name: "Trunk_vlan50"
       shared: false
+      value_specs: {"mtu": 1450}
   Trunk_vlan20_network:
     type: OS::Neutron::Net
     properties:
       name: "Trunk_vlan20"
       shared: false
+      value_specs: {"mtu": 1450}
   Trunk_vlan30_network:
     type: OS::Neutron::Net
     properties:
       name: "Trunk_vlan30"
       shared: false
+      value_specs: {"mtu": 1450}
   Provisioning_subnet:
     type: OS::Neutron::Subnet
     properties:
       name: "sub-Provisioning"
       network_id: { get_resource: Provisioning_network }
       cidr: "192.0.2.253/24"
-      gateway_ip: ""
+      gateway_ip: "192.0.2.254"
   Trunk_vlan10_subnet:
     type: OS::Neutron::Subnet
     properties:
@@ -93,20 +99,21 @@ resources:
       network_id: { get_resource: Trunk_network }
       cidr: "1.1.1.1/8"
       gateway_ip: ""
-  Router0_router:
+  Router1_router:
     type: OS::Neutron::Router
     properties:
-      name: "Router0"
+      name: "Router1"
+      external_gateway_info: { "network": { get_param: public_net_id } }
 
   
-  Router0_Provisioning_port:
+  Router1_Provisioning_port:
     type: OS::Neutron::Port
     properties:
       network: { get_resource: Provisioning_network }
       fixed_ips:
         - ip_address: "192.0.2.254"
   
-  Router0_Trunk_vlan10_port:
+  Router1_Trunk_vlan10_port:
     type: OS::Neutron::Port
     properties:
       network: { get_resource: Trunk_vlan10_network }
@@ -116,17 +123,17 @@ resources:
 
 
   
-  Router0_Provisioning_router_if:
+  Router1_Provisioning_router_if:
     type: OS::Neutron::RouterInterface
     properties:
-        router: { get_resource: Router0_router }
-        port: { get_resource: Router0_Provisioning_port }
+        router: { get_resource: Router1_router }
+        port: { get_resource: Router1_Provisioning_port }
   
-  Router0_Trunk_vlan10_router_if:
+  Router1_Trunk_vlan10_router_if:
     type: OS::Neutron::RouterInterface
     properties:
-        router: { get_resource: Router0_router }
-        port: { get_resource: Router0_Trunk_vlan10_port }
+        router: { get_resource: Router1_router }
+        port: { get_resource: Router1_Trunk_vlan10_port }
   
   CPU_2_Memory_4096_Disk_50_flavor:
     type: OS::Nova::Flavor
@@ -178,7 +185,7 @@ resources:
       port_security_enabled: false
       
       fixed_ips:
-        - {subnet: {get_resource: Provisioning_subnet}, ip_address: "192.0.2.1"}
+        - {subnet: {get_resource: Provisioning_subnet}, ip_address: "192.0.2.10"}
       
   3compute01-0_port:
     type: OS::Neutron::Port
@@ -218,6 +225,13 @@ resources:
       fixed_ips:
         - {subnet: {get_resource: Provisioning_subnet}, ip_address: "192.0.2.252"}
       
+  0Workstation-0_fip:
+    type: OS::Neutron::FloatingIP
+    depends_on:
+      - 0Workstation_server
+    properties:
+      floating_network_id: { get_param: public_net_id }
+      port_id: { get_resource: 0Workstation-0_port }
   0Workstation-1_port:
     type: OS::Neutron::Port
     properties:
@@ -421,7 +435,8 @@ resources:
       name: "ipmi-host"
       image: "ipmi-host-boot"
       flavor: { get_resource: CPU_1_Memory_1024_Disk_20_flavor }
-      metadata: { "description": "", "cdrom": "ipmi-host-"  }
+      config_drive: true
+      metadata: { "description": ""  }
       
       user_data: |
         #!/bin/bash
@@ -438,7 +453,8 @@ resources:
       name: "1undercloud"
       image: "1undercloud-vda"
       flavor: { get_resource: CPU_4_Memory_18432_Disk_50_flavor }
-      metadata: { "description": "cloudinitclobber:false", "cdrom": "1undercloud-"  }
+      config_drive: true
+      metadata: { "description": "cloudinitclobber:false"  }
       
       user_data: |
         #cloud-config
@@ -461,6 +477,7 @@ resources:
       name: "3compute01"
       image: "3compute01-sda"
       flavor: { get_resource: CPU_2_Memory_4096_Disk_50_flavor }
+      config_drive: true
       metadata: { "description": "powerdown:true
 ipmiaddr:192.0.2.224
 ipmipw:redhat", "cdrom": "3compute01-CDROM"  }
@@ -477,6 +494,7 @@ ipmipw:redhat", "cdrom": "3compute01-CDROM"  }
       name: "3compute02"
       image: "3compute02-sda"
       flavor: { get_resource: CPU_2_Memory_4096_Disk_50_flavor }
+      config_drive: true
       metadata: { "description": "powerdown:true
 ipmiaddr:192.0.2.225
 ipmipw:redhat", "cdrom": "3compute02-CDROM"  }
@@ -493,8 +511,9 @@ ipmipw:redhat", "cdrom": "3compute02-CDROM"  }
       name: "0Workstation"
       image: "0Workstation-boot"
       flavor: { get_resource: CPU_1_Memory_1024_Disk_20_flavor }
-      metadata: { "description": "", "cdrom": "0Workstation-"  }
-      
+      config_drive: true
+      metadata: { "description": ""  }
+      user_data: { get_param: userdata }
       networks:
         
         - port: { get_resource: 0Workstation-0_port}
@@ -507,6 +526,7 @@ ipmipw:redhat", "cdrom": "3compute02-CDROM"  }
       name: "2ctrl01"
       image: "2ctrl01-sda"
       flavor: { get_resource: CPU_2_Memory_8192_Disk_60_flavor }
+      config_drive: true
       metadata: { "description": "powerdown:true
 ipmiaddr:192.0.2.221
 ipmipw:redhat", "cdrom": "2ctrl01-CDROM"  }

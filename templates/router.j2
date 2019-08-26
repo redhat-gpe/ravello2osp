@@ -2,6 +2,7 @@
     type: OS::Neutron::Router
     properties:
       name: "{{ name }}"
+      external_gateway_info: { "network": { get_param: public_net_id } }
 
   {% for interface in interfaces %}
   {{ name}}_{{interface.net}}_port:

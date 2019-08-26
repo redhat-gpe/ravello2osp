@@ -1,0 +1,8 @@
+  {{ port }}_fip:
+    type: OS::Neutron::FloatingIP
+    depends_on:
+      - {{ vm }}_server
+    properties:
+      floating_network_id: { get_param: public_net_id }
+      port_id: { get_resource: {{ port }}_port }
+

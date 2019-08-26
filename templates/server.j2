@@ -3,6 +3,7 @@
     properties:
       name: "{{ name }}"
       image: "{{ name }}-{{root_disk}}"
+      config_drive: true
       flavor: { get_resource: {{ flavor }}_flavor }
       metadata: { "description": "{{ description }}"{% if cdrom %}, "cdrom": "{{name-}}-{{cdrom}}"{%endif%}  }
       {% if userdata|length %}

@@ -1,27 +1,30 @@
 - hosts: all
   gather_facts: False
   vars:
+    directory: ""
     images:
       
-      - ['vdb', '0Workstation-boot']  
+      - ['vdb', '3compute02-sda']  
       
-      - ['vdc', '3compute02-sda']  
+      - ['vdc', '3compute02-CDROM']  
+      
+      - ['vdd', '0Workstation-boot']  
       
       - ['vde', '1undercloud-vda']  
       
-      - ['vdf', '2ctrl01-sda']  
+      - ['vdf', 'ipmi-host-boot']  
       
-      - ['vdh', '3compute01-sda']  
+      - ['vdg', 'ipmi-host-repos']  
       
-      - ['vdj', 'ipmi-host-boot']  
+      - ['vdh', 'ipmi-host-registry']  
       
-    volumes:
+      - ['vdi', '2ctrl01-sda']  
       
-      - ['vdd', '3compute02-CDROM', '1']  
+      - ['vdj', '2ctrl01-CDROM']  
       
-      - ['vdg', '2ctrl01-CDROM', '1']  
+      - ['vdk', '3compute01-sda']  
       
-      - ['vdi', '3compute01-CDROM', '1']  
+      - ['vdl', '3compute01-CDROM']  
       
 
   tasks:
@@ -33,55 +36,33 @@
         state: directory
     - yum: name=qemu-img state=present
     - command: qemu-img convert -O qcow2 -p /dev/{{ item[0]}} "/root/images/{{ item[1] }}"
-      loop:  "{{ disks }}"
+      loop:  "{{ images }}"
 
     - file:
-        path: /root/images/
+        path: /mnt/agonzalez/pool11-tor/images/
         state: absent
       delegate_to: localhost
     - file:
-        path: /root/images/
+        path: /mnt/agonzalez/pool11-tor/images/
         state: directory
       delegate_to: localhost
 
     - fetch:
        src: /root/images/{{ item[1] }}
-       dest: /root/images/{{ item[1] }}
+       dest: /mnt/agonzalez/pool11-tor/images/{{ item[1] }}
        flat: yes
-      loop:  "{{ disks }}"
-
-    - fetch:
-        src: /root/images/{{ item[1] }}
-        dest: /root/images/{{ item[1] }}
-        flat: yes
-      loop:  "{{ disks }}"
+       validate_checksum: no
+      name: "start"
+      loop:  "{{ images }}"
 
     - name: import images 
       delegate_to: localhost
       os_image:
-        cloud: openstack-project
+        cloud: openstack
         name: "{{ item[1] }}"
         container_format: bare
         disk_format: qcow2
-        filename: "/root/images/{{ item[1] }}"
-      loop:  "{{ images+volumes }}"
+        filename: "/mnt/agonzalez/pool11-tor/images/{{ item[1] }}"
+      loop:  "{{ images }}"
 
-
-    - name: import volumes 
-      delegate_to: localhost
-      os_volume:
-        cloud: openstack-project
-        name: "{{ item[1] }}"
-        image: "{{ item[1] }}"
-        size: "{{ item[2] }}"
-      loop:  "{{ volumes }}"
-
-    - name: import images 
-      delegate_to: localhost
-      os_image:
-        cloud: openstack-project
-        name: "{{ item[1] }}"
-        state: absent
-      loop:  "{{ volumes }}"
-      
 

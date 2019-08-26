@@ -30,6 +30,7 @@ client = RavelloClient()
 client.login(args["user"], args["password"])
 bp = client.get_blueprints(filter={"name": bpname})[0]
 config = client.get_blueprint(bp["id"])
+
 network_config = config["design"]["network"]
 vms_config = config["design"]["vms"]
 
@@ -39,9 +40,10 @@ if debug:
 
 
 env = Environment(loader=file_loader)
-header = env.get_template('header.j2')
-stack_admin = header.render()
-stack_user = header.render()
+header_admin = env.get_template('header_admin.j2')
+header_user = env.get_template('header_user.j2')
+stack_admin = header_admin.render()
+stack_user = header_user.render()
 tplproject = env.get_template('project.j2')
 stack_admin += tplproject.render()
 
@@ -96,6 +98,7 @@ def generate_subnets():
     gw = ""
     if "ipConfigurationIds" in subnet:
       gw = get_gateway(subnet["ipConfigurationIds"])
+    print network,gw
     if debug:
       print("Create subnet %s/%s on network %s" % (subnet["net"], subnet["mask"],get_network_name_from_segment_id(subnet["networkSegmentId"])))
       print("Gateway: %s" % (get_gateway(subnet["ipConfigurationIds"])))
@@ -111,9 +114,16 @@ def get_gateway(configIds):
       for interfaces in network_config["services"]["networkInterfaces"]:
         for ifconfig in interfaces["ipConfigurations"]:
           if ifconfig["id"] == ipconfig:
-            if not is_dns_server_ip(ifconfig["id"]):
+            print network_config["services"]["routers"]
+            if is_gateway_ip(ifconfig["id"]):
               return ifconfig["staticIpConfig"]["ip"]
     return ""
+
+def is_gateway_ip(id):
+  if "routers" in network_config["services"]:
+    for routers in network_config["services"]["routers"]:
+      if id in routers["ipConfigurationIds"]:
+        return True
 
 def is_dns_server_ip(id):
   if "dnsServers" in network_config["services"]:
@@ -123,7 +133,7 @@ def is_dns_server_ip(id):
 
 
 
-def find_subnet_from_rourter_if(id):
+def find_subnet_from_router_if(id):
   for subnet in network_config["subnets"]:
     for configId in subnet["ipConfigurationIds"]:
       if configId == id:
@@ -140,7 +150,7 @@ def generate_routers():
       for interfaces in network_config["services"]["networkInterfaces"]:
         for ifconfig in interfaces["ipConfigurations"]:
           if ifconfig["id"] == ipconfig:
-            network = find_subnet_from_rourter_if(ipconfig)
+            network = find_subnet_from_router_if(ipconfig)
             ports.append({"ip": ifconfig["staticIpConfig"]["ip"], "net": network, "subnet": "sub-" + network })
     tplrouter= env.get_template('router.j2')
     stack_user += tplrouter.render(name="Router%s" % i, interfaces=ports)
@@ -191,7 +201,13 @@ def generate_vms():
     networks[vm["name"]] = []
     trunks[vm["name"]] = []
     for network in sorted(vm["networkConnections"], key=lambda k: k["device"]["index"]):
-      ip_address = get_port_ip_address(network["ipConfig"]["id"]) if "ipConfig" in network else ""
+      assign_public = False
+      if "ipConfig" in network:
+        ip_address = get_port_ip_address(network["ipConfig"]["id"])
+        if network["ipConfig"]["hasPublicIp"]:
+          assign_public = True
+      else: 
+        ip_address = ""
       if "mac" not in network["device"]:
         network["device"]["mac"] = network["device"]["generatedMac"]
       if debug:
@@ -200,11 +216,10 @@ def generate_vms():
       networks[vm["name"]].append({"mac": network["device"]["mac"], 
          "network": find_device_network(network["id"]),
          "ip_address": ip_address,
-         "index": network["device"]["index"]
+         "index": network["device"]["index"],
+         "public": assign_public
           })
-      if "ipConfig" in network:
-        if network["ipConfig"]["hasPublicIp"]:
-          print("TODO: Create floating IP for VM %s" % vm["name"]) # TODO
+          
       if "vlanInterfaces" in network:
         trunks[vm["name"]].append({"mac": network["device"]["mac"], 
            "network": find_device_network(network["id"]),
@@ -247,16 +262,19 @@ def generate_vms():
     vms[vm["name"]] = {"flavor": name_flavor, "network": networks, "volumes": volumes, "images": images, "vm": vm, "description": vmdesc, "userdata": vmuserdata, "cdrom": cdrom}
    
 
+  tplflavor = env.get_template('flavor.j2')
   for flavor,res in flavors.items():
-    tplflavor = env.get_template('flavor.j2')
     stack_user += tplflavor.render(name=flavor, cpu=res["cpu"], memory=res["memory"], disk=res["disk"])
 
+  tplport= env.get_template('port.j2')
+  tplfip = env.get_template('fip.j2')
   for vm,data in networks.items():
     i=0
     for vmnetwork in data: 
-      tplport= env.get_template('port.j2')
       stack_user += tplport.render(name="%s-%d" % (vm, vmnetwork["index"]), mac=vmnetwork["mac"], 
         network=vmnetwork["network"], ip_address=vmnetwork["ip_address"])
+      if vmnetwork["public"]:
+        stack_user += tplfip.render(port="%s-%d" % (vm, vmnetwork["index"]), network=vmnetwork["network"], vm=vm)
       i=i+1
   for vm,data in trunks.items():
     for vmnetwork in data: 
@@ -306,14 +324,10 @@ if len(vm["hardDrives"]) > 1:
 # Add new disks
 i=1
 import_images = []
-import_volumes= []
 for voltype, disk in disks_created:
   print(disk)
   vm["hardDrives"].append({"name": disk["name"], "baseDiskImageId": disk["id"], "baseDiskImageName": disk["name"], "type": "DISK", "controllerIndex": i, "size": disk["size"], "controller": "VIRTIO"})
-  if voltype == "image":
-    import_images.append({"device": "vd%s" % chr(97+i), "name":  disk["name"], "size": disk["size"]["value"]})
-  else:
-    import_volumes.append({"device": "vd%s" % chr(97+i), "name":  disk["name"], "size": disk["size"]["value"]})
+  import_images.append({"device": "vd%s" % chr(97+i), "name":  disk["name"], "size": disk["size"]["value"]})
   i=i+1
 client.update_vm(app, vm)
 client.publish_application_updates(app)
@@ -322,7 +336,7 @@ client.reload(vm)
 
 
 tplimportdisks = env.get_template('import_disks.j2')
-import_disks = tplimportdisks.render(images=import_images, volumes=import_volumes)
+import_disks = tplimportdisks.render(images=import_images)
 
 print("INFO: Generated %s" % (output_dir + "/playbook_import_disks.yaml"))
 fp = open(output_dir + "/playbook_import_disks.yaml", "w")
