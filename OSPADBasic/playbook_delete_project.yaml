@@ -1,0 +1,32 @@
+- hosts: localhost
+  gather_facts: false
+  vars_prompt:
+    - name: project_name
+      prompt: "Name of the project"
+      private: false
+  tasks:
+    - name: Delete objects inside the project
+      os_stack:
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_name: "{{ project_name }}"
+         username: admin
+         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         user_domain_name: Default
+         project_domain_name: Default
+        name: "create-objects-{{project_name}}"
+        state: absent
+
+    - name: Delete project and unassign permission
+      os_stack:
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_name: "admin"
+         username: admin
+         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         user_domain_name: Default
+         project_domain_name: Default
+        name: "create-project-{{project_name}}"
+        state: absent
+ 
+

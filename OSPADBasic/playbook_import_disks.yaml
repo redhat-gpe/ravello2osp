@@ -39,17 +39,17 @@
       loop:  "{{ images }}"
 
     - file:
-        path: /mnt/agonzalez/pool11-tor/images/
+        path: /home/gpte/images/
         state: absent
       delegate_to: localhost
     - file:
-        path: /mnt/agonzalez/pool11-tor/images/
+        path: /home/gpte/images/
         state: directory
       delegate_to: localhost
 
     - fetch:
        src: /root/images/{{ item[1] }}
-       dest: /mnt/agonzalez/pool11-tor/images/{{ item[1] }}
+       dest: /home/gpte/images/{{ item[1] }}
        flat: yes
        validate_checksum: no
       name: "start"
@@ -58,11 +58,17 @@
     - name: import images 
       delegate_to: localhost
       os_image:
-        cloud: openstack
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_name: admin
+         username: admin
+         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         user_domain_name: Default
+         project_domain_name: Default
         name: "{{ item[1] }}"
         container_format: bare
         disk_format: qcow2
-        filename: "/mnt/agonzalez/pool11-tor/images/{{ item[1] }}"
+        filename: "/home/gpte/images/{{ item[1] }}"
       loop:  "{{ images }}"
 
 

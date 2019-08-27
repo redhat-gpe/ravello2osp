@@ -1,0 +1,129 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    project: "OPTLC-OSPD_Basic-v13.7-bp"
+  vars_prompt:
+    - prompt: "GUID for the project?"
+      name: guid
+      private: no
+
+    - prompt: "USER for the project?"
+      name: user
+      private: no
+
+    - prompt: "ID for the external network"
+      name: external
+      private: no
+
+  tasks:
+    - set_fact: project_name="{{ project | replace('-bp','') | replace('OPTLC', 'OTLC-LAB-' + user) }}-{{ guid }}"
+
+    - command: "date +%s"
+      register: date
+
+    - set_fact: 
+        userdata: |
+         #!/bin/bash
+         #ipa-client-configure-script
+         
+         echo "/usr/sbin/ipa-client-install --domain=OPENTLC.COM -w d780d22c -N -U --mkhomedir --no-dns-sshfp --hostname=workstation-{{ guid }}.rhpds.opentlc.com" > /usr/local/bin/configureIPA.sh
+         chmod +x /usr/local/bin/configureIPA.sh
+         
+         runipaScript() {
+           /usr/local/bin/configureIPA.sh
+           retc=$?
+           if [ "$retc" != 0 ]; then
+             echo "IPA Failure. Trying again.."
+             sleep 1
+           fi
+         }
+         
+         if [ -x "/usr/sbin/ipa-client-install" ]
+         then
+           try=1
+           while [ "$retc" != 0 ] && [ $try -le 10 ]
+           do
+             /usr/sbin/ipa-client-install -U --uninstall;rm -f /etc/krb5.conf /etc/ipa/*
+             runipaScript
+             ((try=$try+1))
+           done
+           sed -i 's/^GSSAPI/#GSSAPI/' /etc/ssh/sshd_config;service sshd restart;sed -i '2ildap_group_nesting_level=0' /etc/sssd/sssd.conf;service sssd restart
+           id {{ user }}
+           if [ "$?" == 0 ]
+           then
+             /usr/bin/curl -s 'http://www.opentlc.com/finish/index.php?email=josegonz%40redhat.com&appname=&srvname=Red+Hat+OPENTLC&message=Your+Red+Hat+OPENTLC+application+{{ project_name }}+host+workstation-{{ guid }}.rhpds.opentlc.com+can+now+authenticate.++Take+note+that+your+lab+environment+may+still+have+other+hosts+building%2C+so+please+make+sure+they+are+all+running+before+starting+your+demo%2Flab.'
+           else
+             /usr/bin/curl -s 'http://www.opentlc.com/finish/index.php?email=josegonz%40redhat.com&appname={{ project_name }}&srvname=Red+Hat+OPENTLC&message=Your+Red+Hat+OPENTLC+application+{{ project_name }}+host+workstation-{{ guid }}.rhpds.opentlc.com+is+failing+to+authenticate%2C+you+may+need+to+destroy+{{ project_name }}+in+Red+Hat+OPENTLC+and+build+again.'
+           fi
+         fi
+         
+         
+         echo 'partner-users:*:1673000010:{{ user }}' >> /etc/group
+         sudotest=`grep '^%partner-users' /etc/sudoers`
+         if [ -z "$sudotest" ]
+         then
+           echo '%partner-users ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+         fi
+         
+         if [ -x "/usr/local/bin/open-init.sh" ]
+         then
+           /usr/local/bin/open-init.sh {{ user }} 
+         fi
+
+    - name: Check if project exists
+      os_project_facts:
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_name: admin
+         username: admin
+         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         user_domain_name: Default
+         project_domain_name: Default
+        name: "{{ project_name }}"
+      register: project_exists
+
+    - fail: msg="Project exists, can't continue"
+      when: project_exists.ansible_facts.openstack_projects
+
+
+    - name: Create project and assign permission
+      os_stack:
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_name: admin
+         username: admin
+         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         user_domain_name: Default
+         project_domain_name: Default
+        name: "create-project-{{project_name}}"
+        template: "stack_admin.yaml"
+        parameters:
+          project_name: "{{ project_name }}" 
+          project_description: "created:{{ date.stdout }}"
+
+    - name: Create objects inside the project
+      register: objects
+      os_stack:
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_name: "{{ project_name }}"
+         username: admin
+         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         user_domain_name: Default
+         project_domain_name: Default
+        name: "create-objects-{{project_name}}"
+        template: "stack_user.yaml"
+        parameters:
+          public_net_id: "{{ external }}" 
+          userdata: "{{ userdata }}"
+    - set_fact: fip="{{ objects.stack.outputs[0].output_value }}"
+    - debug: msg="Floating IP {{ fip }} assigned"
+    - uri:
+       url: https://api.softlayer.com/rest/v3/SoftLayer_Dns_Domain/2800309/createARecord
+       user: josegonz
+       password: 2c887f0eb0dcc6b2720b488322775fac3b0cf59c77c7364cbff65acaaf307d25 
+       method: POST
+       body_format: json
+       body: {'parameters':["workstation-{{guid}}","{{ fip }}","3600"]}
+    - debug: msg="DNS workstation-{{ guid }}.iad.opentlc.com assigned"
+

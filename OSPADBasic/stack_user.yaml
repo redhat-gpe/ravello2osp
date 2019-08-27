@@ -231,6 +231,7 @@ resources:
       - 0Workstation_server
     properties:
       floating_network_id: { get_param: public_net_id }
+      #floating_ip_address: "169.47.15.167"
       port_id: { get_resource: 0Workstation-0_port }
   0Workstation-1_port:
     type: OS::Neutron::Port
@@ -437,7 +438,7 @@ resources:
       flavor: { get_resource: CPU_1_Memory_1024_Disk_20_flavor }
       config_drive: true
       metadata: { "description": ""  }
-      
+      user_data_format: RAW 
       user_data: |
         #!/bin/bash
         mkdir -p /etc/ravellobmc;echo "ephTok=ezGsqNLN2rRvITSU5WSkdcge8MACStSN7wayRr1G2Ay2YVTmTpZh5Sac3H4TJW2t" > /etc/ravellobmc/ravellobmc.conf
@@ -456,6 +457,7 @@ resources:
       config_drive: true
       metadata: { "description": "cloudinitclobber:false"  }
       
+      user_data_format: RAW 
       user_data: |
         #cloud-config
         ssh_pwauth: True
@@ -513,6 +515,7 @@ ipmipw:redhat", "cdrom": "3compute02-CDROM"  }
       flavor: { get_resource: CPU_1_Memory_1024_Disk_20_flavor }
       config_drive: true
       metadata: { "description": ""  }
+      user_data_format: RAW 
       user_data: { get_param: userdata }
       networks:
         
@@ -537,13 +540,19 @@ ipmipw:redhat", "cdrom": "2ctrl01-CDROM"  }
         
         - port: { get_resource: 2ctrl01-1_port}
         
-  ipmi-host_volume_repos:
-    type: OS::Cinder::VolumeAttachment
-    properties:
-      instance_uuid: "ipmi-host"
-      volume_id: "ipmi-host-repos"
-  ipmi-host_volume_registry:
-    type: OS::Cinder::VolumeAttachment
-    properties:
-      instance_uuid: "ipmi-host"
-      volume_id: "ipmi-host-registry"
+
+outputs:
+   public_ip:
+    description: Floating IP address of workstation
+    value: { get_attr: [ 0Workstation-0_fip, floating_ip_address ] }      
+
+#  ipmi-host_volume_repos:
+#    type: OS::Cinder::VolumeAttachment
+#    properties:
+#      instance_uuid: "ipmi-host"
+#      volume_id: "ipmi-host-repos"
+#  ipmi-host_volume_registry:
+#    type: OS::Cinder::VolumeAttachment
+#    properties:
+#      instance_uuid: "ipmi-host"
+#      volume_id: "ipmi-host-registry"
