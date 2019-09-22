@@ -2,6 +2,7 @@
   gather_facts: false
   vars:
     project: "OPTLC-OSPD_Basic-v13.7-bp"
+    username: "{{ guid }}"
   vars_prompt:
     - prompt: "GUID for the project?"
       name: guid
@@ -17,6 +18,8 @@
 
   tasks:
     - set_fact: project_name="{{ project | replace('-bp','') | replace('OPTLC', 'OTLC-LAB-' + user) }}-{{ guid }}"
+    - set_fact: userpw="{{ lookup('password', '/dev/null length=20 chars=ascii_letters') }}"
+    - debug: var=userpw
 
     - command: "date +%s"
       register: date
@@ -100,15 +103,31 @@
         parameters:
           project_name: "{{ project_name }}" 
           project_description: "created:{{ date.stdout }}"
+          project_user: "{{ username }}"
+          project_userpw: "{{ userpw }}"
 
+    - debug: var=userpw
+    - debug: var=username
+
+    - name: auth
+      register: objects
+      os_auth:
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_name: "{{ project_name }}"
+         username: "{{ username }}"
+         password: "{{ userpw }}"
+         user_domain_name: Default
+         project_domain_name: Default
+ 
     - name: Create objects inside the project
       register: objects
       os_stack:
         auth: 
          auth_url: http://169.47.15.163:5000/v3
          project_name: "{{ project_name }}"
-         username: admin
-         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         username: "{{ username }}"
+         password: "{{ userpw }}"
          user_domain_name: Default
          project_domain_name: Default
         name: "create-objects-{{project_name}}"

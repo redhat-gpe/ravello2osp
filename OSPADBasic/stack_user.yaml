@@ -135,38 +135,6 @@ resources:
         router: { get_resource: Router1_router }
         port: { get_resource: Router1_Trunk_vlan10_port }
   
-  CPU_2_Memory_4096_Disk_50_flavor:
-    type: OS::Nova::Flavor
-    properties:
-      ram: "4096"
-      vcpus: "2"
-      disk: "50"
-      name: "CPU_2_Memory_4096_Disk_50"
-      is_public: False
-  CPU_1_Memory_1024_Disk_20_flavor:
-    type: OS::Nova::Flavor
-    properties:
-      ram: "1024"
-      vcpus: "1"
-      disk: "20"
-      name: "CPU_1_Memory_1024_Disk_20"
-      is_public: False
-  CPU_2_Memory_8192_Disk_60_flavor:
-    type: OS::Nova::Flavor
-    properties:
-      ram: "8192"
-      vcpus: "2"
-      disk: "60"
-      name: "CPU_2_Memory_8192_Disk_60"
-      is_public: False
-  CPU_4_Memory_18432_Disk_50_flavor:
-    type: OS::Nova::Flavor
-    properties:
-      ram: "18432"
-      vcpus: "4"
-      disk: "50"
-      name: "CPU_4_Memory_18432_Disk_50"
-      is_public: False
   ipmi-host-0_port:
     type: OS::Neutron::Port
     properties:
@@ -435,7 +403,7 @@ resources:
     properties:
       name: "ipmi-host"
       image: "ipmi-host-boot"
-      flavor: { get_resource: CPU_1_Memory_1024_Disk_20_flavor }
+      flavor: "CPU_1_Memory_1024_Disk_20"
       config_drive: true
       metadata: { "description": ""  }
       user_data_format: RAW 
@@ -453,7 +421,7 @@ resources:
     properties:
       name: "1undercloud"
       image: "1undercloud-vda"
-      flavor: { get_resource: CPU_4_Memory_18432_Disk_50_flavor }
+      flavor: "CPU_4_Memory_18432_Disk_50"
       config_drive: true
       metadata: { "description": "cloudinitclobber:false"  }
       
@@ -478,7 +446,7 @@ resources:
     properties:
       name: "3compute01"
       image: "3compute01-sda"
-      flavor: { get_resource: CPU_2_Memory_4096_Disk_50_flavor }
+      flavor: "CPU_2_Memory_4096_Disk_50"
       config_drive: true
       metadata: { "description": "powerdown:true
 ipmiaddr:192.0.2.224
@@ -495,7 +463,7 @@ ipmipw:redhat", "cdrom": "3compute01-CDROM"  }
     properties:
       name: "3compute02"
       image: "3compute02-sda"
-      flavor: { get_resource: CPU_2_Memory_4096_Disk_50_flavor }
+      flavor: "CPU_2_Memory_4096_Disk_50"
       config_drive: true
       metadata: { "description": "powerdown:true
 ipmiaddr:192.0.2.225
@@ -512,7 +480,7 @@ ipmipw:redhat", "cdrom": "3compute02-CDROM"  }
     properties:
       name: "0Workstation"
       image: "0Workstation-boot"
-      flavor: { get_resource: CPU_1_Memory_1024_Disk_20_flavor }
+      flavor: "CPU_1_Memory_1024_Disk_20"
       config_drive: true
       metadata: { "description": ""  }
       user_data_format: RAW 
@@ -528,7 +496,7 @@ ipmipw:redhat", "cdrom": "3compute02-CDROM"  }
     properties:
       name: "2ctrl01"
       image: "2ctrl01-sda"
-      flavor: { get_resource: CPU_2_Memory_8192_Disk_60_flavor }
+      flavor: "CPU_2_Memory_8192_Disk_60"
       config_drive: true
       metadata: { "description": "powerdown:true
 ipmiaddr:192.0.2.221
