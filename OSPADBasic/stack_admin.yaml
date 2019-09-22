@@ -61,7 +61,7 @@ resources:
       vcpus: "2"
       disk: "50"
       name: 
-       list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_20"]]
+       list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_4096_Disk_50"]]
       is_public: False
       tenants: [{get_resource: openstack_project}]
   CPU_1_Memory_1024_Disk_20_flavor:
