@@ -199,6 +199,23 @@
       with_items:
         - "{{ token_output.json.resources }}"
 
+    - name: Change owner of the VM
+      uri:
+        url: "{{ item.href }}"
+        method: POST
+        body_format: json
+        body:
+          action: set_owner
+          resource : { 'resource': { 'owner': '{{ user }}' } }
+        validate_certs: False
+        headers:
+          X-Auth-Token: "{{ auth_token }}"
+          Content-Type: "application/json"
+        status_code: 200
+      register: output
+      with_items:
+        - "{{ token_output.json.resources }}"
+
     - debug: var=vms
     
     - name: Register vm with the service
