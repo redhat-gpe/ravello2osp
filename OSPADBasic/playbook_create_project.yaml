@@ -206,7 +206,7 @@
         body_format: json
         body:
           action: set_owner
-          resource : { 'resource': { 'owner': '{{ user }}' } }
+          resource : { 'owner': '{{ user }}' }
         validate_certs: False
         headers:
           X-Auth-Token: "{{ auth_token }}"
