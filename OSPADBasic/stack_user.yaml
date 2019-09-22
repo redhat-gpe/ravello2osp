@@ -7,6 +7,9 @@ parameters:
   public_net_id:
     type: string
     description: The ID for the floating ip
+  project_name:
+    type: string
+    description: Name of the project for the flavors
 resources:
   Provisioning_network:
     type: OS::Neutron::Net

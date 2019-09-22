@@ -85,6 +85,7 @@
         name: "create-objects-{{project_name}}"
         template: "stack_user.yaml"
         parameters:
+          project_name: "{{ project_name }}" 
           public_net_id: "{{ external }}" 
           userdata: ""
     - set_fact: fip="{{ objects.stack.outputs[0].output_value }}"
