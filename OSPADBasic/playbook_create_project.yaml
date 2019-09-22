@@ -134,7 +134,7 @@
        body: {'parameters':["workstation-{{guid}}","{{ fip }}","3600"]}
     - debug: msg="DNS workstation-{{ guid }}.iad.opentlc.com assigned"
 
-    - set_fact: vms="{{ objects.stack.outputs[1].output_value }}"
+    - set_fact: ospvms="{{ objects.stack.outputs[1].output_value }}"
 
     - name: Refresh provider in CloudForms
       uri:
@@ -174,7 +174,7 @@
 
     - set_fact: filter=""
     - set_fact: filter="{{ filter}}&filter[]=or%20uid_ems={{ item }}"
-      loop: "{{vms}}"
+      loop: "{{ospvms}}"
     
     - set_fact: find_vm_url="{{ api_uri }}/api/vms?expand=resources&attributes=href,uid_ems&{{ filter }}"
     - debug: var=find_vm_url
