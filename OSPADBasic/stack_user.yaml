@@ -403,7 +403,8 @@ resources:
     properties:
       name: "ipmi-host"
       image: "ipmi-host-boot"
-      flavor: { get_param: project_name }"-CPU_1_Memory_1024_Disk_20"
+      flavor: 
+       list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_20"]]
       config_drive: true
       metadata: { "description": ""  }
       user_data_format: RAW 
@@ -421,7 +422,8 @@ resources:
     properties:
       name: "1undercloud"
       image: "1undercloud-vda"
-      flavor: { get_param: project_name }"-CPU_4_Memory_18432_Disk_50"
+      flavor: 
+       list_join: ['-', [{ get_param: project_name }, "CPU_4_Memory_18432_Disk_50"]]
       config_drive: true
       metadata: { "description": "cloudinitclobber:false"  }
       
@@ -446,7 +448,8 @@ resources:
     properties:
       name: "3compute01"
       image: "3compute01-sda"
-      flavor: { get_param: project_name }"-CPU_2_Memory_4096_Disk_50"
+      flavor: 
+       list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_4096_Disk_50"]]
       config_drive: true
       metadata: { "description": "powerdown:true
 ipmiaddr:192.0.2.224
@@ -463,7 +466,8 @@ ipmipw:redhat", "cdrom": "3compute01-CDROM"  }
     properties:
       name: "3compute02"
       image: "3compute02-sda"
-      flavor: { get_param: project_name }"-CPU_2_Memory_4096_Disk_50"
+      flavor: 
+       list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_4096_Disk_50"]]
       config_drive: true
       metadata: { "description": "powerdown:true
 ipmiaddr:192.0.2.225
@@ -480,7 +484,8 @@ ipmipw:redhat", "cdrom": "3compute02-CDROM"  }
     properties:
       name: "0Workstation"
       image: "0Workstation-boot"
-      flavor: { get_param: project_name }"-CPU_1_Memory_1024_Disk_20"
+      flavor: 
+       list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_20"]]
       config_drive: true
       metadata: { "description": ""  }
       user_data_format: RAW 
@@ -496,7 +501,8 @@ ipmipw:redhat", "cdrom": "3compute02-CDROM"  }
     properties:
       name: "2ctrl01"
       image: "2ctrl01-sda"
-      flavor: { get_param: project_name }"-CPU_2_Memory_8192_Disk_60"
+      flavor: 
+       list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_8192_Disk_60"]]
       config_drive: true
       metadata: { "description": "powerdown:true
 ipmiaddr:192.0.2.221
