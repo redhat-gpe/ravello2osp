@@ -3,6 +3,13 @@
   vars:
     project: "OPTLC-OSPD_Basic-v13.7-bp"
     username: "{{ guid }}"
+    cf_user: admin
+    cf_pw: NjA1YWIxYmU4OTFhN2Y4MzM4ZTlhZWYw
+    service_id: 3    
+    api_uri: https://169.47.15.178/
+    provider_id: 3
+    max_retries: 10
+    retry_interval: 20
   vars_prompt:
     - prompt: "GUID for the project?"
       name: guid
@@ -19,6 +26,34 @@
   tasks:
     - set_fact: project_name="{{ project | replace('-bp','') | replace('OPTLC', 'OTLC-LAB-' + user) }}-{{ guid }}"
     - set_fact: userpw="{{ lookup('password', '/dev/null length=20 chars=ascii_letters') }}"
+    - debug: var=service_id
+
+    - name: Get CloudForms auth_token
+      uri:
+        url: "{{ api_uri }}/api/auth"
+        method: GET
+        validate_certs: no
+        user: "{{ cf_user }}"
+        password: "{{ cf_pw }}"
+        headers:
+          accept: "application/json"
+        return_content: yes
+      register: uri_output
+
+    - set_fact: auth_token="{{ uri_output.json.auth_token }}"
+
+    - name: Set the Provider URL
+      set_fact:
+        provider_url: "{{ api_uri }}/api/providers/{{ provider_id }}"
+
+    - debug: var=provider_url
+
+    - name: Set the Service URL
+      set_fact:
+        svc_url: "/api/services/{{ service_id }}"
+    - debug: var=svc_url
+
+
     - debug: var=userpw
 
     - command: "date +%s"
@@ -99,3 +134,90 @@
        body: {'parameters':["workstation-{{guid}}","{{ fip }}","3600"]}
     - debug: msg="DNS workstation-{{ guid }}.iad.opentlc.com assigned"
 
+    - set_fact: vms="{{ objects.stack.outputs[1].output_value }}"
+
+    - name: Refresh provider in CloudForms
+      uri:
+        url: "{{ provider_url }}"
+        method: POST
+        body:
+          action: refresh
+        body_format: json
+        validate_certs: False
+        headers:
+          X-Auth-Token: "{{ auth_token }}"
+          Content-Type: "application/json" 
+        status_code: 200
+      register: output
+    - debug: var=output
+
+    - name: set the task href
+      set_fact:
+        task_url: "{{ output.json.task_href}}"
+    - debug: var=task_url
+
+    - name: Wait for the refresh to end
+      uri:
+        url: "{{ task_url }}"
+        method: GET
+        validate_certs: False
+        headers:
+          X-Auth-Token: "{{ auth_token }}"
+          Content-Type: "application/json" 
+        status_code: 200
+      register: task_result
+      until: task_result.json.state == 'Finished' or task_result.json.status == 'Error'
+      failed_when: task_result.json.status == 'Error'
+      retries: "{{max_retries}}"
+      delay: "{{retry_interval}}"
+    - debug: var=task_result
+
+    - set_fact: filter=""
+    - set_fact: filter="{{ filter}}&filter[]=or%20uid_ems={{ item }}"
+      loop: "{{vms}}"
+    
+    - set_fact: find_vm_url="{{ api_uri }}/api/vms?expand=resources&attributes=href,uid_ems&{{ filter }}"
+    - debug: var=find_vm_url
+
+    - name: Call to CloudForms to find href for new_vm_uuid
+      uri:
+        url: "{{ find_vm_url }}"
+        method: GET
+        validate_certs: no
+        headers:
+           X-Auth-Token: "{{ auth_token }}"
+           Content-Type: "application/json"
+        body_format: json
+        return_content: yes
+      register: token_output
+
+    - debug: var=token_output
+
+    - set_fact: cf_vm_href="{{ token_output.json.resources[0].href }}"
+
+    - debug: var=cf_vm_href
+
+    - name: Create an array of vms
+      set_fact:
+        vms: "{{ vms|default([]) + [ { 'href': svc_url, 'resource':  { 'href': item } } ] }}"
+      with_items:
+        - "{{ cf_vm_href }}"
+
+    - debug: var=vms
+    
+    - name: Register vm with the service
+      uri:
+        url: "{{ api_uri }}/api/services"
+        method: POST
+        body_format: json
+        body:
+          action: add_resource
+          resources : "{{ vms }}"
+        validate_certs: False
+        headers:
+          X-Auth-Token: "{{ auth_token }}"
+          Content-Type: "application/json"
+        status_code: 200
+      register: output
+
+    - debug: var=output.json.results[0].success

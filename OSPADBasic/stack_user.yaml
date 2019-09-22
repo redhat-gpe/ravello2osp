@@ -522,6 +522,16 @@ outputs:
    public_ip:
     description: Floating IP address of workstation
     value: { get_attr: [ 0Workstation-0_fip, floating_ip_address ] }      
+   vms:
+    description: List of the VMs created
+    value: 
+     - { get_resource:  ipmi-host_server }
+     - { get_resource:  1undercloud_server }
+     - { get_resource:  3compute01_server }
+     - { get_resource:  3compute02_server }
+     - { get_resource:  0Workstation_server }
+     - { get_resource:  2ctrl01_server }
+
 
 #  ipmi-host_volume_repos:
 #    type: OS::Cinder::VolumeAttachment
