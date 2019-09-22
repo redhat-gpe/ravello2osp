@@ -1,10 +1,19 @@
 - hosts: localhost
   gather_facts: false
+  vars:
+    project: "OPTLC-OSPD_Basic-v13.7-bp"
   vars_prompt:
-    - name: project_name
-      prompt: "Name of the project"
-      private: false
+    - prompt: "GUID for the project?"
+      name: guid
+      private: no
+
+    - prompt: "USER for the project?"
+      name: user
+      private: no
+
+
   tasks:
+    - set_fact: project_name="{{ project | replace('-bp','') | replace('OPTLC', 'OTLC-LAB-' + user) }}-{{ guid }}"
     - name: Delete objects inside the project
       os_stack:
         auth: 
