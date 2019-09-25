@@ -82,7 +82,7 @@ _action_map = {'stop': 'SHUTOFF',
                'unlock': 'ACTIVE',
                'suspend': 'SUSPENDED',
                'resume': 'ACTIVE',
-               'rescue': 'RESCUED',
+               'rescue': 'RESCUE',
                'unrescue': 'ACTIVE'}
 
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
