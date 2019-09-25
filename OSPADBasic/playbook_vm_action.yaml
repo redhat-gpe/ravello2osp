@@ -16,7 +16,9 @@
     - set_fact: vm_image="{{ openstack_servers[0]["image"]["id"] }}"
     - set_fact: vm_project="{{ openstack_servers[0]["tenant_id"] }}"
     - debug: var=vm_project
+
     - name: Rebuild VM
+      when: action == "rebuild"
       os_server_action:
         server: "{{ vm }}"
         action: "{{ action }}"
@@ -28,3 +30,18 @@
          password: XdmdfJKt4cv9zpyn2Wvdr827b
          user_domain_name: Default
          project_domain_name: Default
+
+    - name: Boot VM from PXE
+      when: action == "pxe"
+      os_server_action:
+        server: "{{ vm }}"
+        action: "{{ action }}"
+        image: "pxeimage"
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_id: "{{ vm_project }}"
+         username: admin
+         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         user_domain_name: Default
+         project_domain_name: Default
+
