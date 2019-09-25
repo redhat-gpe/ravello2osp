@@ -1,10 +1,24 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+    - name: Get VM info
+      os_server_facts:
+        server: "{{ vm }}"
+        all_projects: yes
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_name: admin
+         username: admin
+         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         user_domain_name: Default
+         project_domain_name: Default
+ 
+    - set_fact: vm_image=openstack_servers[0]["image"]["id"]
     - name: Rebuild VM
       os_server_action:
         server: "{{ vm }}"
-        action: rebuild
+        action: "{{ action }}"
+        image: "{{ vm_image }}"
         auth: 
          auth_url: http://169.47.15.163:5000/v3
          project_name: admin
