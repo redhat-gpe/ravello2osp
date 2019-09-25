@@ -36,7 +36,7 @@
       os_server_action:
         server: "{{ vm }}"
         action: "rescue"
-        image: "pxeimage"
+        image: "febcf6c3-ced5-48c6-a673-1e633fac7f1f"
         auth: 
          auth_url: http://169.47.15.163:5000/v3
          project_id: "{{ vm_project }}"
@@ -45,3 +45,17 @@
          user_domain_name: Default
          project_domain_name: Default
 
+
+    - name: Boot VM from DISK
+      when: action == "disk"
+      os_server_action:
+        server: "{{ vm }}"
+        action: "unrescue"
+        image: "febcf6c3-ced5-48c6-a673-1e633fac7f1f"
+        auth: 
+         auth_url: http://169.47.15.163:5000/v3
+         project_id: "{{ vm_project }}"
+         username: admin
+         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         user_domain_name: Default
+         project_domain_name: Default

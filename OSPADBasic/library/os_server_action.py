@@ -253,6 +253,16 @@ def main():
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
+        elif action == 'unrescue':
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'unrescue': None})
+            if wait:
+                _wait(timeout, cloud, server, action, module, sdk)
+            module.exit_json(changed=True)
+
+
+
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
