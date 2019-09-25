@@ -35,7 +35,7 @@
       when: action == "pxe"
       os_server_action:
         server: "{{ vm }}"
-        action: "{{ action }}"
+        action: "rescue"
         image: "pxeimage"
         auth: 
          auth_url: http://169.47.15.163:5000/v3
