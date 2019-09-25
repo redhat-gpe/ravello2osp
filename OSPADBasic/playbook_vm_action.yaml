@@ -13,8 +13,9 @@
          user_domain_name: Default
          project_domain_name: Default
  
-    - set_fact: vm_image=openstack_servers[0]["image"]["id"]
-    - set_fact: vm_project=openstack_servers[0]["tenant_id"]
+    - set_fact: vm_image="{{ openstack_servers[0]["image"]["id"] }}"
+    - set_fact: vm_project="{{ openstack_servers[0]["tenant_id"] }}"
+    - debug: var=vm_project
     - name: Rebuild VM
       os_server_action:
         server: "{{ vm }}"
