@@ -22,7 +22,7 @@
         image: "{{ vm_image }}"
         auth: 
          auth_url: http://169.47.15.163:5000/v3
-         project_name: admin
+         project_name: "{{ vm_project }}"
          username: admin
          password: XdmdfJKt4cv9zpyn2Wvdr827b
          user_domain_name: Default
