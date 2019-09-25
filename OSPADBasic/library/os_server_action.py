@@ -121,7 +121,7 @@ def main():
         server=dict(required=True),
         action=dict(required=True, choices=['stop', 'start', 'pause', 'unpause',
                                             'lock', 'unlock', 'suspend', 'resume',
-                                            'rebuild', 'rescue']),
+                                            'rebuild', 'rescue', 'unrescue']),
         image=dict(required=False),
     )
 
