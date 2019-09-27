@@ -126,13 +126,13 @@
     - set_fact: fip="{{ objects.stack.outputs[0].output_value }}"
     - debug: msg="Floating IP {{ fip }} assigned"
     - uri:
-       url: https://api.softlayer.com/rest/v3/SoftLayer_Dns_Domain/2800309/createARecord
+       url: https://api.softlayer.com/rest/v3/SoftLayer_Dns_Domain/2802535/createARecord
        user: josegonz
        password: 2c887f0eb0dcc6b2720b488322775fac3b0cf59c77c7364cbff65acaaf307d25 
        method: POST
        body_format: json
        body: {'parameters':["workstation-{{guid}}","{{ fip }}","3600"]}
-    - debug: msg="DNS workstation-{{ guid }}.iad.opentlc.com assigned"
+    - debug: msg="DNS workstation-{{ guid }}.lab.opentlc.com assigned"
 
     - set_fact: ospvms="{{ objects.stack.outputs[1].output_value }}"
 
