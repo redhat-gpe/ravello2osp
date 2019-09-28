@@ -4,7 +4,9 @@
       name: "{{ name }}"
       image: "{{ name }}-{{root_disk}}"
       config_drive: true
-      flavor: { get_resource: {{ flavor }}_flavor }
+      flavor:
+         list_join: ['-', [{ get_param: project_name }, "{{ flavor }}"]]
+
       metadata: { "description": "{{ description }}"{% if cdrom %}, "cdrom": "{{name-}}-{{cdrom}}"{%endif%}  }
       {% if userdata|length %}
       user_data: |

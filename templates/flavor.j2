@@ -4,6 +4,7 @@
       ram: "{{ memory }}"
       vcpus: "{{ cpu }}"
       disk: "{{ disk }}"
-      name: "{{ name }}"
+      name: 
+         list_join: ['-', [{ get_param: project_name }, "{{ name }}"]]
       is_public: False
 

@@ -23,6 +23,10 @@
       name: external
       private: no
 
+    - prompt: "Directory with stack_admin.yaml and stack_user.yaml"
+      name: directory
+      private: no
+
   tasks:
     - set_fact: project_name="{{ project | replace('-bp','') | replace('OPTLC', 'OTLC-LAB-' + user) }}-{{ guid }}"
     - set_fact: userpw="{{ lookup('password', '/dev/null length=20 chars=ascii_letters') }}"
@@ -86,7 +90,7 @@
          user_domain_name: Default
          project_domain_name: Default
         name: "create-project-{{project_name}}"
-        template: "stack_admin.yaml"
+        template: "{{ directory }}/stack_admin.yaml"
         parameters:
           project_name: "{{ project_name }}" 
           project_description: "created:{{ date.stdout }}"
@@ -118,7 +122,7 @@
          user_domain_name: Default
          project_domain_name: Default
         name: "create-objects-{{project_name}}"
-        template: "stack_user.yaml"
+        template: "{{ directory }}/stack_user.yaml"
         parameters:
           project_name: "{{ project_name }}" 
           public_net_id: "{{ external }}" 

@@ -4,6 +4,14 @@
       name: { get_param: project_name }
       domain: Default
       description: { get_param: project_description }
+
+  openstack_project_user:
+    type: OS::Keystone::User
+    properties:
+      name: { get_param: project_user}
+      password: { get_param: project_userpw }
+      domain: Default
+
   
   openstack_project_role:
     type: OS::Keystone::UserRoleAssignment 
@@ -12,6 +20,17 @@
       roles:  
         - {project: {get_resource: openstack_project}, role: admin} 
 
+  openstack_project_role_user:
+    type: OS::Keystone::UserRoleAssignment 
+    properties: 
+      user: { get_resource: openstack_project_user }
+      roles:  
+        - {project: {get_resource: openstack_project}, role: _member_} 
+    depends_on:
+      - openstack_project_user
+
+
+
   openstack_project_quota:
     type: OS::Nova::Quota
     properties:
@@ -19,4 +38,5 @@
       instances: -1
       project: {get_resource: openstack_project}
       ram: -1
+
 

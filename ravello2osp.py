@@ -6,14 +6,37 @@ import argparse
 import os,sys
 debug = False
 options = argparse.ArgumentParser()
-options.add_argument("-bp", "--blueprint", required=True, help="Name of the blueprint")
-options.add_argument("-o", "--output", required=True, help="Output directory")
-options.add_argument("-u", "--user", required=True, help="Ravello domain/username")
-options.add_argument("-p", "--password", required=True, help="Ravello password")
+options.add_argument("-o", "--output", required=False, help="Output directory")
+options_bp= options.add_argument_group()
+options_bp.add_argument("-bp", "--blueprint", required=False, help="Name of the blueprint")
+options_bp.add_argument("-u", "--user", required=False, help="Ravello domain/username")
+options_bp.add_argument("-p", "--password", required=False, help="Ravello password")
+options_json= options.add_argument_group()
+options_json.add_argument("-j", "--jsonf", required=False, help="JSON file containing definition")
+
 
 args = vars(options.parse_args())
 
-output_dir = os.path.realpath(args["output"])
+if not args["jsonf"] and not args["blueprint"]:
+      print ("You have to use --jsonf or --blueprint options")
+      sys.exit(-1)
+
+
+if args["output"]:
+  output_dir = os.path.realpath(args["output"])
+else:
+  if not args["jsonf"]:
+      print ("You have to use --output with --blueprint")
+      sys.exit(-1)
+  output_directory = json_file.split(".")
+  output_dir = os.path.realpath(output_directory[0])
+
+if args["blueprint"]:
+  if not args["user"] or not args["password"]:
+      print ("You have to use --user and --password with --blueprint")
+      sys.exit(-1)
+
+
 
 if not os.path.exists(output_dir):
   try:
@@ -24,12 +47,17 @@ if not os.path.exists(output_dir):
 
 file_loader = FileSystemLoader("templates")
 
-bpname = args["blueprint"]
 
-client = RavelloClient()
-client.login(args["user"], args["password"])
-bp = client.get_blueprints(filter={"name": bpname})[0]
-config = client.get_blueprint(bp["id"])
+if args["blueprint"]:
+  bpname = args["blueprint"]
+  client = RavelloClient()
+  client.login(args["user"], args["password"])
+  bp = client.get_blueprints(filter={"name": bpname})[0]
+  config = client.get_blueprint(bp["id"])
+else:
+  json_file = args["jsonf"]
+  config = json.loads(open(json_file,"r").read())
+  bpname = config["name"]
 
 network_config = config["design"]["network"]
 vms_config = config["design"]["vms"]
@@ -47,14 +75,9 @@ stack_user = header_user.render()
 tplproject = env.get_template('project.j2')
 stack_admin += tplproject.render()
 
-print("INFO: Generated %s" % (output_dir + "/stack_admin.yaml"))
-fp = open(output_dir + "/stack_admin.yaml", "w")
-fp.write(stack_admin)
-fp.close()
 
 
 
-disks_created=[]
 networks = []
 
 def get_network_name_from_segment_id(id):
@@ -98,7 +121,7 @@ def generate_subnets():
     gw = ""
     if "ipConfigurationIds" in subnet:
       gw = get_gateway(subnet["ipConfigurationIds"])
-    print network,gw
+
     if debug:
       print("Create subnet %s/%s on network %s" % (subnet["net"], subnet["mask"],get_network_name_from_segment_id(subnet["networkSegmentId"])))
       print("Gateway: %s" % (get_gateway(subnet["ipConfigurationIds"])))
@@ -114,7 +137,8 @@ def get_gateway(configIds):
       for interfaces in network_config["services"]["networkInterfaces"]:
         for ifconfig in interfaces["ipConfigurations"]:
           if ifconfig["id"] == ipconfig:
-            print network_config["services"]["routers"]
+            if debug:
+              print network_config["services"]["routers"]
             if is_gateway_ip(ifconfig["id"]):
               return ifconfig["staticIpConfig"]["ip"]
     return ""
@@ -186,7 +210,7 @@ def get_port_ip_address(id):
     
 def generate_vms():
   global stack_user
-  global disks_created
+  global stack_admin
   flavors = {}
   vms = {}
   networks = {} 
@@ -242,15 +266,15 @@ def generate_vms():
         else:
           volumes.append({"name": disk["name"], "size": size, "id": disk["id"], "vm": vm["name"]})
       else:
-        print("Add cdrom %s" % (disk["name"]))
+        if debug:
+          print("Add cdrom %s" % (disk["name"]))
         images.append({"name": disk["name"], "size": size, "id": disk["id"], "vm": vm["name"]})
         cdrom = disk["name"]
         #voltype="image"
       diskimagename="%s-%s" % (vm["name"], disk["name"])
-      bpdisk = client.get_diskimages(filter={"name": diskimagename})
-      if bpdisk:
-        client.delete_diskimage(bpdisk[0]["id"])
-      disks_created.append([voltype,client.create_diskimage({"diskId": disk["id"], "vmId": vm["id"], "diskImage": { "name": diskimagename}, "applicationId": bp["id"], "blueprint": "true", "offline": "false"})])
+      #bpdisk = client.get_diskimages(filter={"name": diskimagename})
+      #if bpdisk:
+      #  client.delete_diskimage(bpdisk[0]["id"])
 
 
     vmdesc = ""
@@ -264,7 +288,7 @@ def generate_vms():
 
   tplflavor = env.get_template('flavor.j2')
   for flavor,res in flavors.items():
-    stack_user += tplflavor.render(name=flavor, cpu=res["cpu"], memory=res["memory"], disk=res["disk"])
+    stack_admin += tplflavor.render(name=flavor, cpu=res["cpu"], memory=res["memory"], disk=res["disk"])
 
   tplport= env.get_template('port.j2')
   tplfip = env.get_template('fip.j2')
@@ -284,7 +308,6 @@ def generate_vms():
 
   for vm,data in vms.items():
     tplvm = env.get_template('server.j2')
-    print("userdata2:" + data["userdata"])
     stack_user += tplvm.render(name=vm, description=data["description"], flavor=data["flavor"], nics=networks[vm], root_disk=get_root_disk_name(data["vm"]), userdata=data["userdata"], cdrom=data["cdrom"])
 
   for vm, data in vms.items():
@@ -298,56 +321,11 @@ generate_subnets()
 generate_routers()
 generate_vms()
 
+print("INFO: Generated %s" % (output_dir + "/stack_admin.yaml"))
+fp = open(output_dir + "/stack_admin.yaml", "w")
+fp.write(stack_admin)
+fp.close()
 print("INFO: Generated %s" % (output_dir + "/stack_user.yaml"))
 fp = open(output_dir + "/stack_user.yaml", "w")
 fp.write(stack_user)
 fp.close()
-
-vm_id = 3895024678045852
-app = client.get_application(3125680014112)
-vm = client.get_vm(3125680014112,3895024678045852,'deployment')
-if vm["state"] == 'STARTED':
-  client.stop_vm(app, vm)
-  while vm["state"] != "STOPPED":
-    print("Waiting till VM is stopped")
-    vm = client.get_vm(3125680014112,3895024678045852,'deployment')
-    time.sleep(30)
-
-# Remove current disks
-
-if len(vm["hardDrives"]) > 1:
-  root_disk = vm["hardDrives"][0]
-  vm["hardDrives"] = [root_disk]
-  client.update_vm(app, vm)
-  client.publish_application_updates(app)
-
-# Add new disks
-i=1
-import_images = []
-for voltype, disk in disks_created:
-  print(disk)
-  vm["hardDrives"].append({"name": disk["name"], "baseDiskImageId": disk["id"], "baseDiskImageName": disk["name"], "type": "DISK", "controllerIndex": i, "size": disk["size"], "controller": "VIRTIO"})
-  import_images.append({"device": "vd%s" % chr(97+i), "name":  disk["name"], "size": disk["size"]["value"]})
-  i=i+1
-client.update_vm(app, vm)
-client.publish_application_updates(app)
-client.reload(vm)
-
-
-
-tplimportdisks = env.get_template('import_disks.j2')
-import_disks = tplimportdisks.render(images=import_images)
-
-print("INFO: Generated %s" % (output_dir + "/playbook_import_disks.yaml"))
-fp = open(output_dir + "/playbook_import_disks.yaml", "w")
-fp.write(import_disks)
-fp.close()
-
-if vm["state"] == 'STOPPED':
-  client.start_vm(app,vm)
-  while vm["state"] != "STARTED":
-    print("Waiting till VM is started")
-    vm = client.get_vm(3125680014112,3895024678045852,'deployment')
-    time.sleep(30)
-
- 
