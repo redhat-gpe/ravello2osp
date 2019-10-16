@@ -22,6 +22,7 @@ if not args["jsonf"] and not args["blueprint"]:
       sys.exit(-1)
 
 
+json_file = args["jsonf"]
 if args["output"]:
   output_dir = os.path.realpath(args["output"])
 else:
@@ -55,7 +56,6 @@ if args["blueprint"]:
   bp = client.get_blueprints(filter={"name": bpname})[0]
   config = client.get_blueprint(bp["id"])
 else:
-  json_file = args["jsonf"]
   config = json.loads(open(json_file,"r").read())
   bpname = config["name"]
 

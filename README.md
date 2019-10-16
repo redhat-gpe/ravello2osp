@@ -19,17 +19,22 @@ Main script is **ravello2osp.py**
 
 Syntax:
 ~~~
-usage: ravello2osp.py [-h] -bp BLUEPRINT -o OUTPUT -u USER -p PASSWORD
+usage: ravello2osp.py [-h] [-o OUTPUT] [-bp BLUEPRINT] [-u USER] [-p PASSWORD]
+                      [-j JSONF]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -bp BLUEPRINT, --blueprint BLUEPRINT
-                        Name of the blueprint
   -o OUTPUT, --output OUTPUT
                         Output directory
+
+  -bp BLUEPRINT, --blueprint BLUEPRINT
+                        Name of the blueprint
   -u USER, --user USER  Ravello domain/username
   -p PASSWORD, --password PASSWORD
                         Ravello password
+
+  -j JSONF, --jsonf JSONF
+                        JSON file containing definition
 ~~~
 
 Example:
