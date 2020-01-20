@@ -8,11 +8,10 @@
   openstack_project_user:
     type: OS::Keystone::User
     properties:
-      name: { get_param: project_user}
-      password: { get_param: project_userpw }
+      name: { get_param: project_api_user }
+      password: { get_param: project_api_pass }
       domain: Default
 
-  
   openstack_project_role:
     type: OS::Keystone::UserRoleAssignment 
     properties: 
@@ -29,14 +28,22 @@
     depends_on:
       - openstack_project_user
 
-
-
-  openstack_project_quota:
+  openstack_project_nova_quota:
     type: OS::Nova::Quota
     properties:
       cores: -1
       instances: -1
       project: {get_resource: openstack_project}
       ram: -1
+    depends_on:
+      - openstack_project
 
+
+  openstack_project_cinder_quota:
+    type: OS::Cinder::Quota
+    properties:
+      project: {get_resource: openstack_project}
+      volumes: 100
+    depends_on:
+      - openstack_project_nova_quota
 

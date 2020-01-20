@@ -2,18 +2,100 @@
     type: OS::Nova::Server
     properties:
       name: "{{ name }}"
-      image: "{{ name }}-{{root_disk}}"
-      config_drive: true
+      {% if gls_fixes_enabled %}
+      image: "{{root_disk}}"
+      {% else %}
+      image: "{{ bpname }}-{{ name }}-{{root_disk}}"
+      {% endif %}
+      config_drive: True
       flavor:
          list_join: ['-', [{ get_param: project_name }, "{{ flavor }}"]]
 
-      metadata: { "description": "{{ description }}"{% if cdrom %}, "cdrom": "{{name-}}-{{cdrom}}"{%endif%}  }
-      {% if userdata|length %}
-      user_data: |
-        {{ userdata|replace("\n","\n        ") }}
+      {% if is_public %}
+      key_name:  { get_resource: openstack_project_infra_key }
       {% endif %}
+      metadata: 
+        "guid": { get_param: project_guid }
+        "description": "{{ description[0:254] }}"
+        {% if description|length > 254 %}
+          {% for i in range(0,(((description|length)-254)/254)|int+1) %}
+        "description{{ i }}": "{{ description[254*(i+1):254*(i+2)] }}"
+          {% endfor %}
+        {% endif %}
+        "hostname": 
+          str_replace:
+            template: "{{ hostname }}"
+            params:
+              REPL: {get_param: project_guid}
+        {% if is_public %}
+        {% if "opentlc.com" in public_dns %}
+        "AnsibleGroup": bastions
+        "public_dns": true
+        {% endif %}
+        {% endif %}
+        {% if cdrom %} 
+        "cdrom": "{{bpname}}-{{name}}-{{cdrom}}"
+        {%endif%} 
+        {% if name == ipmiserver %}
+        "api_user": { get_param: api_user}
+        "api_pass": { get_param: api_pass }
+        "api_url": { get_param: api_url}
+        "project_name": { get_param: project_name }
+        {% endif %}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+          {% if userdata|length %}
+            {{ userdata|replace("\n","\n            ") }}
+          {% endif %}
+          params:
+            REPL: {get_param: project_guid}
+            {% if bootordermode == "signal" %}
+            SIGNAL: {% if bootorder %}{ get_attr: [{{name}}_wait_handle_string, value] }{%else%}sleep 0{%endif%}
+            {% endif %}
       networks:
         {% for nic in nics %}
         - port: { get_resource: {{name}}-{{loop.index-1}}_port}
         {% endfor %}
+      {% if volumes %}
+      block_device_mapping_v2:
+        {% for volume in volumes %}
+        - volume_id: { get_resource: {{name }}_volume_{{volume.name}} }
+          boot_index: -1
+        {% endfor %}
+      {% endif %}
+    {% if waitfor and bootordermode %}
+    depends_on:
+      {% for wait in waitfor %}
+      - {{ wait }}{% if bootordermode == "signal" %}_wait{% endif %}
+      {% endfor %}
+    {% endif %}
+
+  {%if bootorder and bootordermode == "signal" %}
+  {{name}}_wait:
+    type: "AWS::CloudFormation::WaitCondition"
+    depends_on: {{name}}_server
+    properties:
+      Handle:
+        get_resource: {{name}}_wait_handle
+      Timeout: 1000
+
+  {{ name }}_wait_handle:
+    type: "AWS::CloudFormation::WaitConditionHandle"
+
+  {{name}}_wait_handle_string:
+    type: OS::Heat::Value
+    properties:
+      type: string
+      value:
+        str_replace:
+          template: |
+            /usr/bin/curl -X PUT -H 'Content-Type:application/json' -d '{"Status":"SUCCESS","Reason":"Configuration OK","UniqueId":"$id$","Data":"$id$ Configured."}' "$wait_handle$"
+          params:
+            $wait_handle$:
+               get_resource: {{name}}_wait_handle
+            $id$: {{ name }}
+  {% endif %}
 

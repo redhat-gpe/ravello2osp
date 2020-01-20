@@ -1,6 +1,9 @@
   {{vm}}_volume_{{volume}}:
-    type: OS::Cinder::VolumeAttachment
+    type: OS::Cinder::Volume
     properties:
-      instance_uuid: "{{ vm }}"
-      volume_id: "{{ vm }}-{{ volume }}"
+      name: "{{ vm }}-{{ volume }}"
+      {% if not emptyvolumes %}
+      image: "{{bpname }}-{{ vm }}-{{ volume}}"
+      {% endif %}
+      size: "{{ size }}"
 

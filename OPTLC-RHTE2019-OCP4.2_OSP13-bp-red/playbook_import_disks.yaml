@@ -1,16 +1,36 @@
 - hosts: all
   gather_facts: False
   vars:
-    project_name: "{{ project_name }}"
+    project_name: "OPTLC-RHTE2019-OCP4.2_OSP13-bp-red"
     ibm_api_key: "" # Used to upload the disks to IBM Cloud Storage
     ibm_bucket_name: ""
     ibm_endpoint: "https://s3.wdc.us.cloud-object-storage.appdomain.cloud"
     ibm_resource_instance_id: "321e756a-2b5a-4a7b-8acb-bafa42cc1882"
     images:
-      {% for disk in images %}
-      - ['{{ disk.type }}', '{{ disk.device }}', '{{ disk.name }}', '{{ disk.size }}']  
-      {% endfor %}
-{% raw %}
+      
+      - ['image', 'vda', '01workstation-vol', '10']  
+      
+      - ['image', 'vdb', '02undercloud-vol', '50']  
+      
+      - ['image', 'vdc', '03ctrl01-vol', '50']  
+      
+      - ['cdrom', 'vdd', '03ctrl01-vol1', '682']  
+      
+      - ['image', 'vde', '05compute01-vol', '50']  
+      
+      - ['cdrom', 'vdf', '05compute01-vol1', '682']  
+      
+      - ['image', 'vdg', '06compute02-vol', '50']  
+      
+      - ['cdrom', 'vdh', '06compute02-vol1', '682']  
+      
+      - ['volume', 'vdi', 'ipmi-host-REPOS', '50']  
+      
+      - ['image', 'vdj', 'ipmi-host-boot', '20']  
+      
+      - ['volume', 'vdk', 'ipmi-host-registry', '100']  
+      
+
   tasks:
     - name: Remove from the VM the directory /root/images
       file:
@@ -23,17 +43,17 @@
     - name: Install qemu-img
       yum: name=qemu-img state=present
 
-    - name: Convert the disks attached to {% endraw %}{{ format }}{% raw %}
-      command: qemu-img convert -O {% endraw %}{{ format }}{% raw %} -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
+    - name: Convert the disks attached to raw
+      command: qemu-img convert -O raw -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
       loop:  "{{ images }}"
 
     - name: Upload the images to OSP
       os_image:
         auth: 
-         auth_url: {% endraw %}{{auth_url}}{% raw %}
-         project_name: {% endraw %}{{ osp_project }}{% raw %}
-         username: {% endraw %}{{auth_user}}{% raw %}
-         password: {% endraw %}{{auth_password}}{% raw %}
+         auth_url: http://169.47.188.15:5000//v3
+         project_name: admin
+         username: admin
+         password: T4g9fYEfwCuDCwgybCmGq6cxg
          user_domain_name: Default
          project_domain_name: Default
         name: "{{ project_name }}-{{ item[2] }}"
@@ -103,5 +123,4 @@
       tags:
       - shutdown
 
-{% endraw %}
 

@@ -1,8 +1,17 @@
-  {{net}}_subnet:
+  {{network}}_subnet:
     type: OS::Neutron::Subnet
     properties:
       name: "{{ name }}"
-      network_id: { get_resource: {{ net }}_network }
+      network_id: { get_resource: {{ network }}_network }
       cidr: "{{ cidr }}"
       gateway_ip: "{{ gateway }}"
+      enable_dhcp: "{{ dhcp }}"
+      {% if dhcp %}
+      allocation_pools: [{"start": {{ dhcpstart }}, "end": {{ dhcpend }}}]
+      {% endif %}
+      dns_nameservers:
+      {% if dnsip %}
+        - {{ dnsip }}
+      {% endif %}
+        - 8.8.8.8
 

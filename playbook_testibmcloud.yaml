@@ -1,0 +1,39 @@
+- hosts: localhost
+  gather_facts: False
+  vars:
+    api_key: HukowevrlgGUCWq2r8w6QUAJQ60p05NA3Ubd8Gpiq2Ui
+    endpoint: "https://s3.wdc.us.cloud-object-storage.appdomain.cloud"
+    resource_instance_id: "321e756a-2b5a-4a7b-8acb-bafa42cc1882"
+
+  tasks:
+    - name: Authentication against IAM IBM Cloud
+      uri:
+       url: "https://iam.cloud.ibm.com/identity/token"
+       method: "POST"
+       body_format: "form-urlencoded"
+       body:
+        apikey: "{{ api_key }}"
+        response_type: "cloud_iam"
+        grant_type: "urn:ibm:params:oauth:grant-type:apikey"
+      register: authtoken
+    - set_fact: access_token="{{ authtoken.json.access_token }}"
+
+    - name: Create a bucket
+      ignore_errors: true
+      uri:
+        url: "{{ endpoint }}/ospad-v2"
+        method: "PUT"
+        headers:
+          Authorization: "bearer {{ access_token }}"
+          ibm-service-instance-id: "{{ resource_instance_id }}"
+ 
+    - name: Upload file to bucket
+      uri:
+        url: "{{ endpoint }}/ospad-v2/file.txt"
+        method: "PUT"
+        src: "/etc/services"
+        headers:
+          Authorization: "bearer {{ access_token }}"
+          ibm-service-instance-id: "{{ resource_instance_id }}"
+          Content-Type: "text/plain; charset=utf-8"
+

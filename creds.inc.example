@@ -1,0 +1,16 @@
+# Ravello username and password
+export ravelloUser='example@redhat.com'
+export ravelloPass='my*ravello!pass'
+
+# OpenStack username and password
+export ospUser='myospuser'
+export ospPass='my$osp#pass'
+
+# OpenStack project for user
+export ospProject='admin'
+
+# OpenStack keystone URL
+export ospAuthURL='http://169.47.188.15:5000'
+
+# Comment this out if you want to use password authentication otherwise it will inject this password into the exporter VM in the root user
+export pubKeyFile="/home/myuser/.ssh/id_rsa.pub"

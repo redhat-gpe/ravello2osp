@@ -4,7 +4,7 @@
 # - Version 0.2: Bug Fixes, new features
 
 from jinja2 import Environment, FileSystemLoader
-from netaddr import IPNetwork, IPAddress
+from netaddr import IPNetwork
 import argparse
 import base64
 import json
@@ -22,6 +22,7 @@ except ImportError:
     ravello_sdk_enabled = False
 
 
+debug = False
 options = argparse.ArgumentParser()
 options.add_argument("-o", "--output", required=False, help="Output directory")
 options.add_argument("-e", "--emptyvolumes", required=False,
@@ -37,25 +38,11 @@ options_json = options.add_argument_group()
 options_json.add_argument("-j", "--jsonf", required=False,
                           help="JSON file containing definition")
 options_dns = options.add_argument_group()
-
 options_dns.add_argument(
     "-dns", "--enabledns", required=False, help="Enable DNS", action='store_true')
 
-options_dns.add_argument(
-    "--dns-ip", required=False, help="Specify manually an IP for DNS server\
-        instead auto-generated one")
-
-options.add_argument(
-    "--bootorder", required=False, help="Enable boot order. Options: signal or depends")
-
-options.add_argument(
-    "--ipmiserver", required=False, help="Specify the name of your IPMI VM")
-options.add_argument("-d", "--debug", required=False,
-                     help="Debug", action='store_true')
 
 args = vars(options.parse_args())
-
-debug = args["debug"]
 
 if not args["jsonf"] and not args["blueprint"]:
     print("You have to use --jsonf or --blueprint options")
@@ -63,7 +50,6 @@ if not args["jsonf"] and not args["blueprint"]:
 
 emptyvolumes = args["emptyvolumes"]
 enabledns = args["enabledns"]
-ipmiserver = args["ipmiserver"]
 
 json_file = args["jsonf"]
 if args["output"]:
@@ -80,12 +66,6 @@ if args["blueprint"]:
         print("You have to use --user and --password with --blueprint")
         sys.exit(-1)
 
-if args["bootorder"]:
-    if args["bootorder"] not in ("signal", "depends"):
-        print("Valid boot orders: signal or depends")
-        sys.exit(-1)
-bootordermode = args["bootorder"]
-        
 
 if not os.path.exists(output_dir):
     try:
@@ -132,10 +112,9 @@ stack_admin += tplproject.render()
 
 
 networks = []
-fips = []
 dnsports = {}
 dnsnetwork = None
-dnsip = args["dns_ip"]
+dnsip = None
 bootorders = {}
 
 
@@ -210,16 +189,9 @@ def generate_subnets():
             print("Create subnet %s/%s on network %s" %
                   (subnet["net"], subnet["mask"], get_network_name_from_segment_id(subnet["networkSegmentId"])))
             print("Gateway: %s" % (get_gateway(subnet["ipConfigurationIds"])))
-
-        if (enabledns and not dnsip) and "ipConfigurationIds" in subnet and get_dns(subnet["ipConfigurationIds"]):
+        if enabledns and "ipConfigurationIds" in subnet and get_dns(subnet["ipConfigurationIds"]):
             dnsip = get_dns(subnet["ipConfigurationIds"])
             dnsnetwork = network
-        else:
-            if dnsip and IPAddress(dnsip) in IPNetwork("%s/%s" % (subnet["net"], subnet["mask"])):
-                dnsnetwork = network
-
-            
-
         cidr = IPNetwork('{net}/{mask}'.format(**subnet)).cidr
         dhcp = dhcpstart = dhcpend = False
         if "ipConfigurationIds" in subnet and is_dhcp(subnet["ipConfigurationIds"]):
@@ -256,8 +228,8 @@ def generate_subnets():
         stack_user +=  subnet.generate_template(env)
 
     for network in list(set(networks) - set(subnets_networks)):
-        subnet = Subnet(name="sub-" + network, cidr="1.1.1.1/8", gateway="", \
-            network=network, dhcp=False, dnsip=dnsip)
+        subnet = Subnet(name="sub-" + network.name, cidr="1.1.1.1/8", gateway="", \
+            network=network.name, dhcp=False)
         stack_user +=  subnet.generate_template(env)
 
 
@@ -280,24 +252,22 @@ def get_gateway(configIds):
 def get_dns(configIds):
     for ipconfig in configIds:
         for interfaces in network_config["services"]["networkInterfaces"]:
-            if "ipConfigurations" in interfaces: 
-                for ifconfig in interfaces["ipConfigurations"]:
-                    if ifconfig["id"] == ipconfig:
-                        if debug:
-                            print(network_config["services"]["routers"])
-                        if is_dns_server_ip(ifconfig["id"]):
-                            return ifconfig["staticIpConfig"]["ip"]
+            for ifconfig in interfaces["ipConfigurations"]:
+                if ifconfig["id"] == ipconfig:
+                    if debug:
+                        print(network_config["services"]["routers"])
+                    if is_dns_server_ip(ifconfig["id"]):
+                        return ifconfig["staticIpConfig"]["ip"]
     return ""
 
 
 def get_dns_id(configIds):
     for ipconfig in configIds:
         for interfaces in network_config["services"]["networkInterfaces"]:
-            if "ipConfigurations" in interfaces:
-                for ifconfig in interfaces["ipConfigurations"]:
-                    if ifconfig["id"] == ipconfig:
-                        if is_dns_server_ip(ifconfig["id"]):
-                            return ifconfig["id"]
+            for ifconfig in interfaces["ipConfigurations"]:
+                if ifconfig["id"] == ipconfig:
+                    if is_dns_server_ip(ifconfig["id"]):
+                        return ifconfig["id"]
     return ""
 
 
@@ -339,11 +309,20 @@ def get_dns_entries(id):
 
 
 def find_subnet_from_router_if(id):
+<<<<<<< HEAD
+    for subnet in network_config["subnets"]:
+        if "ipConfigurationIds" in subnet:
+          for configId in subnet["ipConfigurationIds"]:
+              if configId == id:
+                  return get_network_name_from_segment_id(subnet["networkSegmentId"])
+=======
     for subnet in network_config["subnets"]:    
         if "ipConfigurationIds" in subnet:
            for configId in subnet["ipConfigurationIds"]:
                if configId == id:
                    return get_network_name_from_segment_id(subnet["networkSegmentId"])
+
+>>>>>>> 9841da155cea4a329864c212c8a9649b90eae2e3
 
 
 def generate_routers():
@@ -362,9 +341,8 @@ def generate_routers():
                         for ifconfig in interfaces["ipConfigurations"]:
                            if ifconfig["id"] == ipconfig:
                                network = find_subnet_from_router_if(ipconfig)
-                               if ifconfig["staticIpConfig"]["ip"] != dnsip:
-                                   ports.append(RouterPort(ifconfig["staticIpConfig"]["ip"], \
-                                    network,"sub-" + network))
+                               ports.append(RouterPort(ifconfig["staticIpConfig"]["ip"], \
+                                network,"sub-" + network))
         router = Router(name="Router%s" % i, interfaces=ports)
         stack_user += router.generate_template(env)
 
@@ -374,15 +352,7 @@ def generate_routers():
 def get_root_disk_size(vm):
     for disk in vm["hardDrives"]:
         if disk["boot"] and disk["type"] == "DISK":
-            size = disk["size"]["value"]
-            size_unit = disk["size"]["unit"]
-            try:
-                size = unit_conversion_map[size_unit](size)
-            except KeyError:
-                print("Blueprint returned an unexpected size unit. Please create an issue on GitHub.")
-                print("The unexpected unit is: {}".format(size_unit))
-                sys.exit(-1)
-            return size
+            return disk["size"]["value"]
 
 
 def get_root_disk_name(vm):
@@ -420,13 +390,11 @@ def generate_vms():
     global stack_admin
     global dnsports
     global bootorders
-    global ipmiserver
     flavors = []
     vms = {}
     networks = {}
     trunks = {}
     for vm in vms_config:
-        vm_is_public = False
         if "suppliedServices" in vm:
             rules = []
             for service in vm["suppliedServices"]:
@@ -436,9 +404,6 @@ def generate_vms():
                             pmin, pmax = port.split("-")
                         else:
                             pmin = pmax = port
-
-                if int(pmin) <= 22 <= int(pmax):
-                    vm_is_public = True
                 protocol = "tcp"
                 if service["protocol"] == "UDP":
                     protocol = "udp"
@@ -510,12 +475,12 @@ def generate_vms():
                                              "services": "suppliedServices" in vm
                                              })
 
-                if "vlanInterfaces" in network:
-                    trunks[vm["name"]].append({"mac": network["device"]["mac"],
-                                               "network": find_device_network(network["id"]),
-                                               "ip_address": ip_address,
-                                               "subports": network["vlanInterfaces"],
-                                               "index": network["device"]["index"]
+            if "vlanInterfaces" in network:
+                trunks[vm["name"]].append({"mac": network["device"]["mac"],
+                                           "network": find_device_network(network["id"]),
+                                           "ip_address": ip_address,
+                                           "subports": network["vlanInterfaces"],
+                                           "index": network["device"]["index"]
                                            })
         images = []
         volumes = []
@@ -566,27 +531,23 @@ def generate_vms():
             if "#cloud-config" in vm["userData"]:
                 vmuserdata = vm["userData"].replace(
                     "#cloud-config", "#cloud-config\nhostname:  %s" % hostname)
-                if bootorder and bootordermode == "signal":
-                  vmuserdata += "\nruncmd:\n- - sleep %s && SIGNAL" % (bootorder["delay"])
+                if bootorder:
+                  vmuserdata += "\nruncmd:\n- - SIGNAL"
             else:
                 userdata64 = base64.b64encode(vm["userData"].encode('utf8')).decode('utf8')
                 vmuserdata = "#cloud-config\nhostname: %s\nruncmd:\n- echo %s |base64 -d|sh\n" % (
                     hostname, userdata64)
-                if bootorder and bootordermode == "signal":
-                  vmuserdata += "\n - sleep %s && SIGNAL\n" % (bootorder["delay"])
+                if bootorder:
+                  vmuserdata += "\n - SIGNAL\n"
         else:
             vmuserdata = "#cloud-config\nhostname: %s" % hostname
-            if bootorder and bootordermode == "signal":
-              vmuserdata += "\nruncmd:\n - sleep %s && SIGNAL" % (bootorder["delay"])
+            if bootorder:
+              vmuserdata += "\nruncmd:\n - SIGNAL"
 
 
-        if "hostnames" not in vm:
-            vm["hostnames"] = []
-        vms[vm["name"]] = {"flavor": name_flavor, "network": networks, "volumes": volumes, 
-                           "bootorder": bootorder, "images": images, "vm": vm, "description": vmdesc, 
-                           "userdata": vmuserdata, "cdrom": cdrom, "is_public": vm_is_public,
-                           "hostnames": ":".join(vm["hostnames"])
-                           }
+
+        vms[vm["name"]] = {"flavor": name_flavor, "network": networks, "volumes": volumes, "bootorder": bootorder,
+                           "images": images, "vm": vm, "description": vmdesc, "userdata": vmuserdata, "cdrom": cdrom}
 
     for flavor in flavors:
         stack_admin += flavor.generate_template(env)
@@ -602,7 +563,6 @@ def generate_vms():
                 stack_user += port.generate_template(env)
             if vmnetwork["public"]:
                 fip = FIP(vmnetwork["index"], vmnetwork["network"], vm)
-                fips.append("%s-%s" % (vm, vmnetwork["index"]))
                 stack_user += fip.generate_template(env)
 
     for vm, data in networks.items():
@@ -611,11 +571,11 @@ def generate_vms():
             if not vmnetwork["ip_address"]:
                 port = Port(vmnetwork["index"], vmnetwork["mac"], vm, vmnetwork["network"], \
                     vmnetwork["ip_address"], depends_ip, vmnetwork["services"])
-                stack_user += port.generate_template(env)
+                stack_user += fip.generate_template(env)
 
     for vm, data in trunks.items():
         for vmnetwork in data:
-            trunk = Trunk(vm, vmnetwork["index"], vmnetwork["mac"], vmnetwork["network"], \
+            trunk = Trunk(vmnetwork["index"], vmnetwork["mac"], vmnetwork["network"], \
                 vmnetwork["subports"])
             stack_user += trunk.generate_template(env)
 
@@ -626,27 +586,19 @@ def generate_vms():
             stack_user += volume.generate_template(env)
 
 
-    for vm, data in sorted(vms.items()):
+    for vm, data in vms.items():
         waitfor = []
-        if bootorders:
-            bootordersn = sorted(bootorders.keys())
-            bootorder = data["bootorder"]
-            if bootorder and bootordersn.index(bootorder["order"]) != 0:
-              for server in bootorders[bootordersn[bootordersn.index(bootorder["order"])-1]]:
-                waitfor.append(server)
-            if bootorder and bootordersn.index(bootorder["order"]) == len(bootordersn)-1:
-               bootorder = False
+        bootordersn = sorted(bootorders.keys())
+        bootorder = data["bootorder"]
+        if bootorder and bootordersn.index(bootorder["order"]) != 0:
+          for server in bootorders[bootordersn[bootordersn.index(bootorder["order"])-1]]:
+            waitfor.append(server)
+        if bootordersn.index(bootorder["order"]) == len(bootordersn)-1:
+           bootorder = False
         rootdisk = get_root_disk_name( data["vm"])
-        publicdnsnames = []
-        primaryhostname = data["hostnames"].split(":")[0].split(".")[0]
-        for hostname in data["hostnames"].split(":"):
-            if "REPL" in hostname:
-                publicdnsnames.append(hostname)
         vm = VM(vm, data["description"], data["flavor"], networks[vm], rootdisk, \
-            data["userdata"], data["cdrom"], bpname, data["volumes"], primaryhostname, \
-            bootorder, waitfor, bootordermode=bootordermode, is_public=data["is_public"], \
-            public_dns=publicdnsnames)
-        stack_user += vm.generate_template(env, ipmiserver)
+            data["userdata"], data["cdrom"], bpname, data["volumes"], bootorder, waitfor)
+        stack_user += vm.generate_template(env)
 
 
 
@@ -656,9 +608,6 @@ generate_routers()
 generate_vms()
 if enabledns:
     generate_dns()
-
-footer_user = env.get_template('footer_user.j2')
-stack_user += footer_user.render(fips=fips)
 
 print("INFO: Generated %s" % (output_dir + "/stack_admin.yaml"))
 fp = open(output_dir + "/stack_admin.yaml", "w")

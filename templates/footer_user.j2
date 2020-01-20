@@ -1,0 +1,12 @@
+
+outputs:
+  openstack_project_infra_key:
+    description: The SSH infra key
+    value: {get_attr: [openstack_project_infra_key, private_key]}
+{% for vm in fips %}
+  {{ vm }}_fip:
+    description: FIP for {{ vm }}
+    value: {get_attr: [{{ vm }}_fip, floating_ip_address ]} 
+
+{% endfor %}
+

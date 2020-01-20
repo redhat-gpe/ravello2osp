@@ -1,14 +1,35 @@
 heat_template_version: 2016-10-14
 description: Create a project
 parameters:
-  userdata:
-    type: string
-    description: cloud-init for workstation
   public_net_id:
     type: string
     description: The ID for the floating ip
   project_name:
     type: string
     description: Name of the project for the flavors
+  project_guid: 
+    type: string
+  api_user:
+    type: string
+    default: ""
+    description: User for API calls (i.e. ipmi)
+  api_pass:
+    type: string
+    default: ""
+    description: Password for API user
+  api_url:
+    type: string
+    default: ""
+    description: OSP URL for API calls
+ 
 resources:
+  openstack_project_infra_key:
+    type: OS::Nova::KeyPair
+    properties:
+      name:
+        str_replace:
+          template: $project$-infra_key
+          params:
+             $project$: { get_param: project_guid }
+      save_private_key: true
 

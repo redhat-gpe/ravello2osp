@@ -1,0 +1,14 @@
+heat_template_version: 2016-10-14
+description: Create a project
+parameters:
+  userdata:
+    type: string
+    description: cloud-init for workstation
+  public_net_id:
+    type: string
+    description: The ID for the floating ip
+  project_name:
+    type: string
+    description: Name of the project for the flavors
+resources:
+

@@ -1,0 +1,949 @@
+{
+    "_href": "/cloud.ravellosystems.com/api/v1/blueprints/3125678354019",
+    "communityShares": 0,
+    "copies": 3,
+    "creationTime": 1559295920397,
+    "deletionProtected": false,
+    "description": "RHCSA BP for Production Release",
+    "design": {
+        "layout": {
+            "vmLayoutItem": [
+                {
+                    "location": {
+                        "x": 386,
+                        "y": 2
+                    },
+                    "vmId": 357463108
+                },
+                {
+                    "location": {
+                        "x": 482,
+                        "y": 213
+                    },
+                    "vmId": 82710561
+                },
+                {
+                    "location": {
+                        "x": 386,
+                        "y": 115
+                    },
+                    "vmId": 523777396
+                },
+                {
+                    "location": {
+                        "x": 417,
+                        "y": 213
+                    },
+                    "vmId": 524064621
+                },
+                {
+                    "location": {
+                        "x": 271,
+                        "y": 213
+                    },
+                    "vmId": 4986188324667392
+                },
+                {
+                    "location": {
+                        "x": 332,
+                        "y": 213
+                    },
+                    "vmId": 726417392660316
+                },
+                {
+                    "location": {
+                        "x": 545,
+                        "y": 297
+                    },
+                    "vmId": 5961426650416844
+                },
+                {
+                    "location": {
+                        "x": 545,
+                        "y": 213
+                    },
+                    "vmId": 5290078108452471
+                },
+                {
+                    "location": {
+                        "x": 417,
+                        "y": 297
+                    },
+                    "vmId": 229541549760132
+                },
+                {
+                    "location": {
+                        "x": 482,
+                        "y": 297
+                    },
+                    "vmId": 7688554400950071
+                },
+                {
+                    "location": {
+                        "x": 503,
+                        "y": 196
+                    },
+                    "vmId": 1587402609583695872
+                },
+                {
+                    "location": {
+                        "x": 503,
+                        "y": 304
+                    },
+                    "vmId": 2561272376211968000
+                },
+                {
+                    "location": {
+                        "x": 503,
+                        "y": 412
+                    },
+                    "vmId": 2566529766015234048
+                },
+                {
+                    "location": {
+                        "x": 280,
+                        "y": 304
+                    },
+                    "vmId": 4397886724316024832
+                },
+                {
+                    "location": {
+                        "x": 401,
+                        "y": 304
+                    },
+                    "vmId": 5517465399196410
+                }
+            ]
+        },
+        "network": {
+            "services": {
+                "externalGateway": {
+                    "customRulesEnabled": false,
+                    "securityRules": [
+                        {
+                            "accessPolicy": "DENY",
+                            "anySource": true,
+                            "id": 374666573615072384
+                        }
+                    ]
+                },
+                "networkInterfaces": [
+                    {
+                        "id": 3410469052120779776,
+                        "ipConfigurations": [
+                            {
+                                "id": 5158870638136204288,
+                                "staticIpConfig": {
+                                    "ip": "10.1.0.2",
+                                    "mask": "255.255.0.0"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "routers": [
+                    {
+                        "id": 607922836585962624,
+                        "ipConfigurationIds": [
+                            5158870638136204288
+                        ],
+                        "wan": true
+                    }
+                ]
+            },
+            "subnets": [
+                {
+                    "id": 7202371736748250112,
+                    "ipConfigurationIds": [
+                        5029101953867036672,
+                        7005575773437206
+                    ],
+                    "ipVersion": "IPV4",
+                    "mask": "255.255.255.0",
+                    "net": "172.25.252.1",
+                    "networkSegmentId": 2814949225580668928
+                },
+                {
+                    "id": 7984447203747451904,
+                    "ipConfigurationIds": [
+                        488136517493906560,
+                        6662266559946851328,
+                        6753097447495323648,
+                        1934373608535974
+                    ],
+                    "ipVersion": "IPV4",
+                    "mask": "255.255.255.0",
+                    "net": "172.25.250.11",
+                    "networkSegmentId": 2133992382922493952
+                },
+                {
+                    "id": 4743908778557647872,
+                    "ipConfigurationIds": [
+                        5158870638136204288,
+                        501523122634033280
+                    ],
+                    "ipVersion": "IPV4",
+                    "mask": "255.255.0.0",
+                    "net": "10.1.1.11",
+                    "networkSegmentId": 3002371219091530752
+                }
+            ],
+            "switches": [
+                {
+                    "id": 544143800564616320,
+                    "networkSegments": [
+                        {
+                            "id": 2814949225580668928,
+                            "vlanId": 1
+                        }
+                    ],
+                    "ports": [
+                        {
+                            "deviceId": 2595721124228862976,
+                            "deviceType": "VM",
+                            "id": 2576913915405026304,
+                            "index": 1,
+                            "networkSegmentReferences": [
+                                {
+                                    "anyNetworkSegment": false,
+                                    "egressPolicy": "UNTAGGED",
+                                    "id": 7168705520388014080,
+                                    "networkSegmentId": 2814949225580668928
+                                },
+                                {
+                                    "anyNetworkSegment": true,
+                                    "egressPolicy": "TAGGED",
+                                    "id": 2944976282760386560
+                                }
+                            ]
+                        },
+                        {
+                            "deviceId": 967970799788620,
+                            "deviceType": "VM",
+                            "id": 621785944407008384,
+                            "index": 2,
+                            "networkSegmentReferences": [
+                                {
+                                    "anyNetworkSegment": false,
+                                    "egressPolicy": "UNTAGGED",
+                                    "id": 7303169594719421440,
+                                    "networkSegmentId": 2814949225580668928
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": 3842463338054397952,
+                    "networkSegments": [
+                        {
+                            "id": 2133992382922493952,
+                            "vlanId": 1
+                        }
+                    ],
+                    "ports": [
+                        {
+                            "deviceId": 7334680428302914560,
+                            "deviceType": "VM",
+                            "id": 255535584104124512,
+                            "index": 2,
+                            "networkSegmentReferences": [
+                                {
+                                    "anyNetworkSegment": false,
+                                    "egressPolicy": "UNTAGGED",
+                                    "id": 1938418373713786880,
+                                    "networkSegmentId": 2133992382922493952
+                                },
+                                {
+                                    "anyNetworkSegment": true,
+                                    "egressPolicy": "TAGGED",
+                                    "id": 1373866872682476544
+                                }
+                            ]
+                        },
+                        {
+                            "deviceId": 2677343309041347584,
+                            "deviceType": "VM",
+                            "id": 8291958196193752064,
+                            "index": 3,
+                            "networkSegmentReferences": [
+                                {
+                                    "anyNetworkSegment": false,
+                                    "egressPolicy": "UNTAGGED",
+                                    "id": 415311742565264512,
+                                    "networkSegmentId": 2133992382922493952
+                                },
+                                {
+                                    "anyNetworkSegment": true,
+                                    "egressPolicy": "TAGGED",
+                                    "id": 175499622827866208
+                                }
+                            ]
+                        },
+                        {
+                            "deviceId": 1018155528982550656,
+                            "deviceType": "VM",
+                            "id": 3010991222755426304,
+                            "index": 5,
+                            "networkSegmentReferences": [
+                                {
+                                    "anyNetworkSegment": false,
+                                    "egressPolicy": "UNTAGGED",
+                                    "id": 8826397226773690368,
+                                    "networkSegmentId": 2133992382922493952
+                                },
+                                {
+                                    "anyNetworkSegment": true,
+                                    "egressPolicy": "TAGGED",
+                                    "id": 8187783979328756736
+                                }
+                            ]
+                        },
+                        {
+                            "deviceId": 1408587239381122,
+                            "deviceType": "VM",
+                            "id": 2763034958846963712,
+                            "index": 1,
+                            "networkSegmentReferences": [
+                                {
+                                    "anyNetworkSegment": false,
+                                    "egressPolicy": "UNTAGGED",
+                                    "id": 2804332269644311552,
+                                    "networkSegmentId": 2133992382922493952
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": 9174799998364481536,
+                    "networkSegments": [
+                        {
+                            "id": 3002371219091530752,
+                            "vlanId": 1
+                        }
+                    ],
+                    "ports": [
+                        {
+                            "deviceId": 3410469052120779776,
+                            "deviceType": "SERVICES",
+                            "id": 3840399176064230400,
+                            "index": 11,
+                            "networkSegmentReferences": [
+                                {
+                                    "anyNetworkSegment": false,
+                                    "egressPolicy": "UNTAGGED",
+                                    "id": 6305967723963424768,
+                                    "networkSegmentId": 3002371219091530752
+                                }
+                            ]
+                        },
+                        {
+                            "deviceId": 6731315056274252800,
+                            "deviceType": "VM",
+                            "id": 7760122356558039040,
+                            "index": 12,
+                            "networkSegmentReferences": [
+                                {
+                                    "anyNetworkSegment": false,
+                                    "egressPolicy": "UNTAGGED",
+                                    "id": 4388118200166621184,
+                                    "networkSegmentId": 3002371219091530752
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "state": "DONE",
+        "stopVmsByOrder": false,
+        "vmOrderGroups": [
+            {
+                "delay": "0",
+                "id": "1211163047365470",
+                "name": "instructor machines",
+                "order": 1,
+                "skipStartupSequence": false
+            },
+            {
+                "delay": "60",
+                "id": "4964036044583876",
+                "name": "private network gateway",
+                "order": 2,
+                "skipStartupSequence": false
+            },
+            {
+                "delay": "0",
+                "id": "8079897207923802",
+                "name": "servers",
+                "order": 5,
+                "skipStartupSequence": false
+            }
+        ],
+        "vms": [
+            {
+                "allowNested": false,
+                "applicationId": 3125678354019,
+                "baseVmId": 72049923,
+                "bootOrder": [
+                    "CDROM",
+                    "DISK"
+                ],
+                "bootType": "BIOS",
+                "busTopology": {},
+                "creationTime": 1559295920405,
+                "hardDrives": [
+                    {
+                        "baseDiskImageId": 3123530825749,
+                        "baseDiskImageName": "RHT_STAGE:rhel3-bastion-vda-10G-8.0-20190521.qcow2",
+                        "boot": true,
+                        "controller": "virtio",
+                        "controllerId": 7376221420128261120,
+                        "controllerIndex": 0,
+                        "id": 5487055214409052,
+                        "imageFetchMode": "LAZY",
+                        "index": 0,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vda",
+                        "size": {
+                            "unit": "GB",
+                            "value": 10
+                        },
+                        "type": "DISK"
+                    }
+                ],
+                "id": 5517465399196410,
+                "legacyMode": false,
+                "loadingPercentage": 100,
+                "loadingStatus": "DONE",
+                "memorySize": {
+                    "unit": "GB",
+                    "value": 1
+                },
+                "name": "bastion",
+                "networkConnections": [
+                    {
+                        "device": {
+                            "deviceType": "virtio",
+                            "generatedMac": "2c:c2:60:37:48:08",
+                            "index": 0,
+                            "mac": "52:54:00:00:FA:FE",
+                            "pciSlot": 1,
+                            "useAutomaticMac": false
+                        },
+                        "id": 1408587239381122,
+                        "ipConfig": {
+                            "externalAccessState": "ALWAYS_PORT_FORWARDING",
+                            "hasPublicIp": false,
+                            "id": 1934373608535974,
+                            "needElasticIp": false,
+                            "staticIpConfig": {
+                                "ip": "172.25.250.254",
+                                "mask": "255.255.255.0"
+                            }
+                        },
+                        "name": "eth0"
+                    },
+                    {
+                        "device": {
+                            "deviceType": "virtio",
+                            "generatedMac": "2c:c2:60:33:de:94",
+                            "index": 1,
+                            "mac": "52:54:00:01:FC:01",
+                            "useAutomaticMac": false
+                        },
+                        "id": 967970799788620,
+                        "ipConfig": {
+                            "externalAccessState": "ALWAYS_PORT_FORWARDING",
+                            "hasPublicIp": false,
+                            "id": 7005575773437206,
+                            "needElasticIp": false,
+                            "staticIpConfig": {
+                                "ip": "172.25.252.1",
+                                "mask": "255.255.255.0"
+                            }
+                        },
+                        "name": "eth1"
+                    }
+                ],
+                "numCpus": 1,
+                "os": "linux_manuel",
+                "platform": "default",
+                "powerOffOnStopTimeOut": true,
+                "privateCloudImage": false,
+                "rcu": 1.0,
+                "requiresHvm": false,
+                "requiresKeypair": false,
+                "supportsCloudInit": false,
+                "useCdn": false,
+                "usingNewNetwork": true,
+                "vmOrderGroupId": "4964036044583876"
+            },
+            {
+                "allowNested": false,
+                "applicationId": 3125678354019,
+                "baseVmId": 85693063,
+                "bootOrder": [
+                    "CDROM",
+                    "DISK"
+                ],
+                "bootType": "BIOS",
+                "busTopology": {},
+                "creationTime": 1559295920402,
+                "hardDrives": [
+                    {
+                        "baseDiskImageId": 3123527876664,
+                        "baseDiskImageName": "RHT_STAGE:rhel-blankdisk-5G-20190201.qcow2",
+                        "boot": false,
+                        "controller": "virtio",
+                        "controllerId": 7585795900120925184,
+                        "controllerIndex": 3,
+                        "id": 8519847849880064,
+                        "imageFetchMode": "LAZY",
+                        "index": 3,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vdd",
+                        "size": {
+                            "unit": "GB",
+                            "value": 5
+                        },
+                        "type": "DISK"
+                    },
+                    {
+                        "baseDiskImageId": 3123530858523,
+                        "baseDiskImageName": "RHT_STAGE:rhel3-server-vda-10G-8.0-20190521.qcow2",
+                        "boot": true,
+                        "controller": "virtio",
+                        "controllerId": 271444364564562016,
+                        "controllerIndex": 0,
+                        "id": 5544678298000618,
+                        "imageFetchMode": "LAZY",
+                        "index": 0,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vda",
+                        "size": {
+                            "unit": "GB",
+                            "value": 10
+                        },
+                        "type": "DISK"
+                    },
+                    {
+                        "baseDiskImageId": 3123527876664,
+                        "baseDiskImageName": "RHT_STAGE:rhel-blankdisk-5G-20190201.qcow2",
+                        "boot": false,
+                        "controller": "virtio",
+                        "controllerId": 3318612045655942144,
+                        "controllerIndex": 1,
+                        "id": 2344989407920092,
+                        "imageFetchMode": "LAZY",
+                        "index": 1,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vdb",
+                        "size": {
+                            "unit": "GB",
+                            "value": 5
+                        },
+                        "type": "DISK"
+                    },
+                    {
+                        "baseDiskImageId": 3123527876664,
+                        "baseDiskImageName": "RHT_STAGE:rhel-blankdisk-5G-20190201.qcow2",
+                        "boot": false,
+                        "controller": "virtio",
+                        "controllerId": 6244900986972487680,
+                        "controllerIndex": 2,
+                        "id": 2279906964751494,
+                        "imageFetchMode": "LAZY",
+                        "index": 2,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vdc",
+                        "size": {
+                            "unit": "GB",
+                            "value": 5
+                        },
+                        "type": "DISK"
+                    }
+                ],
+                "id": 2566529766015234048,
+                "legacyMode": false,
+                "loadingPercentage": 100,
+                "loadingStatus": "DONE",
+                "memorySize": {
+                    "unit": "GB",
+                    "value": 2
+                },
+                "name": "serverb",
+                "networkConnections": [
+                    {
+                        "device": {
+                            "deviceType": "virtio",
+                            "generatedMac": "2c:c2:60:25:7c:89",
+                            "index": 0,
+                            "mac": "52:54:00:00:FA:0B",
+                            "pciSlot": 1,
+                            "useAutomaticMac": false
+                        },
+                        "id": 1018155528982550656,
+                        "ipConfig": {
+                            "externalAccessState": "ALWAYS_PORT_FORWARDING",
+                            "hasPublicIp": false,
+                            "id": 6662266559946851328,
+                            "needElasticIp": false,
+                            "staticIpConfig": {
+                                "ip": "172.25.250.11",
+                                "mask": "255.255.255.0"
+                            }
+                        },
+                        "name": "eth0"
+                    }
+                ],
+                "numCpus": 2,
+                "os": "linux_manuel",
+                "platform": "default",
+                "powerOffOnStopTimeOut": true,
+                "privateCloudImage": false,
+                "rcu": 2.0,
+                "requiresHvm": false,
+                "requiresKeypair": false,
+                "supportsCloudInit": false,
+                "useCdn": false,
+                "usingNewNetwork": true,
+                "vmOrderGroupId": "8079897207923802"
+            },
+            {
+                "allowNested": false,
+                "applicationId": 3125678354019,
+                "baseVmId": 85693059,
+                "bootOrder": [
+                    "CDROM",
+                    "DISK"
+                ],
+                "bootType": "BIOS",
+                "busTopology": {},
+                "creationTime": 1559295920403,
+                "displayDevice": "VGA",
+                "hardDrives": [
+                    {
+                        "baseDiskImageId": 3123530858526,
+                        "baseDiskImageName": "RHT_STAGE:rhel3-workstation-vda-10G-8.0-20190521.qcow2",
+                        "boot": true,
+                        "controller": "virtio",
+                        "controllerId": 971139896982746240,
+                        "controllerIndex": 0,
+                        "id": 155715962210886,
+                        "imageFetchMode": "LAZY",
+                        "index": 0,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vda",
+                        "size": {
+                            "unit": "GB",
+                            "value": 10
+                        },
+                        "type": "DISK"
+                    }
+                ],
+                "id": 1587402609583695872,
+                "legacyMode": false,
+                "loadingPercentage": 100,
+                "loadingStatus": "DONE",
+                "memorySize": {
+                    "unit": "GB",
+                    "value": 2
+                },
+                "name": "workstation",
+                "networkConnections": [
+                    {
+                        "device": {
+                            "deviceType": "virtio",
+                            "generatedMac": "2c:c2:60:64:96:a5",
+                            "index": 0,
+                            "mac": "52:54:00:00:FA:09",
+                            "pciSlot": 1,
+                            "useAutomaticMac": false
+                        },
+                        "id": 2677343309041347584,
+                        "ipConfig": {
+                            "externalAccessState": "ALWAYS_PORT_FORWARDING",
+                            "hasPublicIp": false,
+                            "id": 6753097447495323648,
+                            "needElasticIp": false,
+                            "staticIpConfig": {
+                                "gateway": "172.25.250.254",
+                                "ip": "172.25.250.9",
+                                "mask": "255.255.255.0"
+                            }
+                        },
+                        "name": "eth0"
+                    }
+                ],
+                "numCpus": 2,
+                "os": "linux_manuel",
+                "platform": "default",
+                "powerOffOnStopTimeOut": true,
+                "privateCloudImage": false,
+                "rcu": 2.0,
+                "requiresHvm": false,
+                "requiresKeypair": false,
+                "supportsCloudInit": false,
+                "useCdn": false,
+                "usingNewNetwork": true,
+                "vmOrderGroupId": "8079897207923802"
+            },
+            {
+                "allowNested": false,
+                "applicationId": 3125678354019,
+                "baseVmId": 85758607,
+                "bootOrder": [
+                    "CDROM",
+                    "DISK"
+                ],
+                "bootType": "BIOS",
+                "busTopology": {},
+                "creationTime": 1559295920406,
+                "hardDrives": [
+                    {
+                        "baseDiskImageId": 3123530858523,
+                        "baseDiskImageName": "RHT_STAGE:rhel3-server-vda-10G-8.0-20190521.qcow2",
+                        "boot": true,
+                        "controller": "virtio",
+                        "controllerId": 5138631310272075776,
+                        "controllerIndex": 0,
+                        "id": 398191605154420,
+                        "imageFetchMode": "LAZY",
+                        "index": 0,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vda",
+                        "size": {
+                            "unit": "GB",
+                            "value": 10
+                        },
+                        "type": "DISK"
+                    },
+                    {
+                        "baseDiskImageId": 3123527876664,
+                        "baseDiskImageName": "RHT_STAGE:rhel-blankdisk-5G-20190201.qcow2",
+                        "boot": false,
+                        "controller": "virtio",
+                        "controllerId": 5541851068538329088,
+                        "controllerIndex": 3,
+                        "id": 497241823175370,
+                        "imageFetchMode": "LAZY",
+                        "index": 3,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vdd",
+                        "size": {
+                            "unit": "GB",
+                            "value": 5
+                        },
+                        "type": "DISK"
+                    },
+                    {
+                        "baseDiskImageId": 3123527876664,
+                        "baseDiskImageName": "RHT_STAGE:rhel-blankdisk-5G-20190201.qcow2",
+                        "boot": false,
+                        "controller": "virtio",
+                        "controllerId": 3810750231551521792,
+                        "controllerIndex": 1,
+                        "id": 3513722777303054,
+                        "imageFetchMode": "LAZY",
+                        "index": 1,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vdb",
+                        "size": {
+                            "unit": "GB",
+                            "value": 5
+                        },
+                        "type": "DISK"
+                    },
+                    {
+                        "baseDiskImageId": 3123527876664,
+                        "baseDiskImageName": "RHT_STAGE:rhel-blankdisk-5G-20190201.qcow2",
+                        "boot": false,
+                        "controller": "virtio",
+                        "controllerId": 4777891901273031680,
+                        "controllerIndex": 2,
+                        "id": 7875618087301710,
+                        "imageFetchMode": "LAZY",
+                        "index": 2,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vdc",
+                        "size": {
+                            "unit": "GB",
+                            "value": 5
+                        },
+                        "type": "DISK"
+                    }
+                ],
+                "id": 2561272376211968000,
+                "legacyMode": false,
+                "loadingPercentage": 100,
+                "loadingStatus": "DONE",
+                "memorySize": {
+                    "unit": "GB",
+                    "value": 2
+                },
+                "name": "servera",
+                "networkConnections": [
+                    {
+                        "device": {
+                            "deviceType": "virtio",
+                            "generatedMac": "2c:c2:60:20:5b:cc",
+                            "index": 0,
+                            "mac": "52:54:00:00:FA:0A",
+                            "pciSlot": 1,
+                            "useAutomaticMac": false
+                        },
+                        "id": 7334680428302914560,
+                        "ipConfig": {
+                            "externalAccessState": "ALWAYS_PORT_FORWARDING",
+                            "hasPublicIp": false,
+                            "id": 488136517493906560,
+                            "needElasticIp": false,
+                            "staticIpConfig": {
+                                "ip": "172.25.250.10",
+                                "mask": "255.255.255.0"
+                            }
+                        },
+                        "name": "eth0"
+                    }
+                ],
+                "numCpus": 2,
+                "os": "linux_manuel",
+                "platform": "default",
+                "powerOffOnStopTimeOut": true,
+                "privateCloudImage": false,
+                "rcu": 2.0,
+                "requiresHvm": false,
+                "requiresKeypair": false,
+                "supportsCloudInit": false,
+                "useCdn": false,
+                "usingNewNetwork": true,
+                "vmOrderGroupId": "8079897207923802"
+            },
+            {
+                "allowNested": false,
+                "applicationId": 3125678354019,
+                "baseVmId": 85693058,
+                "bootOrder": [
+                    "CDROM",
+                    "DISK"
+                ],
+                "bootType": "BIOS",
+                "busTopology": {},
+                "creationTime": 1559295920405,
+                "hardDrives": [
+                    {
+                        "baseDiskImageId": 3123530858637,
+                        "baseDiskImageName": "RHT_STAGE:rh124-ravclassroom-vda-50G-8.0-20190530.qcow2",
+                        "boot": true,
+                        "controller": "virtio",
+                        "controllerId": 1590378989678112768,
+                        "controllerIndex": 0,
+                        "id": 713564606340432,
+                        "imageFetchMode": "LAZY",
+                        "index": 0,
+                        "loadingPercentage": 100,
+                        "loadingStatus": "DONE",
+                        "name": "vda",
+                        "size": {
+                            "unit": "GB",
+                            "value": 50
+                        },
+                        "type": "DISK"
+                    }
+                ],
+                "id": 4397886724316024832,
+                "legacyMode": false,
+                "loadingPercentage": 100,
+                "loadingStatus": "DONE",
+                "memorySize": {
+                    "unit": "GB",
+                    "value": 1
+                },
+                "name": "classroom",
+                "networkConnections": [
+                    {
+                        "device": {
+                            "deviceType": "virtio",
+                            "generatedMac": "2c:c2:60:2c:89:6f",
+                            "index": 0,
+                            "mac": "52:54:00:00:00:fe",
+                            "pciSlot": 1,
+                            "useAutomaticMac": false
+                        },
+                        "id": 2595721124228862976,
+                        "ipConfig": {
+                            "externalAccessState": "ALWAYS_PORT_FORWARDING",
+                            "hasPublicIp": false,
+                            "id": 5029101953867036672,
+                            "needElasticIp": false,
+                            "staticIpConfig": {
+                                "ip": "172.25.252.254",
+                                "mask": "255.255.255.0"
+                            }
+                        },
+                        "name": "eth0"
+                    },
+                    {
+                        "device": {
+                            "deviceType": "virtio",
+                            "generatedMac": "2c:c2:60:2d:6b:f2",
+                            "index": 1,
+                            "mac": "52:54:00:01:00:fe",
+                            "useAutomaticMac": false
+                        },
+                        "id": 6731315056274252800,
+                        "ipConfig": {
+                            "externalAccessState": "ALWAYS_PORT_FORWARDING",
+                            "hasPublicIp": false,
+                            "id": 501523122634033280,
+                            "needElasticIp": false,
+                            "staticIpConfig": {
+                                "gateway": "10.1.0.2",
+                                "ip": "10.1.1.11",
+                                "mask": "255.255.0.0"
+                            }
+                        },
+                        "name": "eth1"
+                    }
+                ],
+                "numCpus": 1,
+                "os": "linux_manuel",
+                "platform": "default",
+                "powerOffOnStopTimeOut": true,
+                "privateCloudImage": false,
+                "rcu": 1.0,
+                "requiresHvm": false,
+                "requiresKeypair": false,
+                "supportsCloudInit": false,
+                "useCdn": false,
+                "usingNewNetwork": true,
+                "vmOrderGroupId": "1211163047365470"
+            }
+        ]
+    },
+    "hasDocumentation": true,
+    "id": 3125678354019,
+    "isPublic": false,
+    "name": "RHT_PROD:RH124-RHEL8.0-1-20190530-prod-bp",
+    "owner": "Rudolf Kastl",
+    "ownerDetails": {
+        "deleted": false,
+        "name": "Rudolf Kastl",
+        "userId": 55803905
+    },
+    "peerToPeerShares": 2,
+    "published": false,
+    "usingNewNetwork": true
+}

@@ -1,0 +1,22 @@
+Create an Ravello APP for export disks:
+# python3 create_ravello_disks_project.py  --user alberto.gonzalez@redhat.com --password blabla $ -n test10
+
+It will return something like:
+App id: 3125680933596
+VM id: 3895024678045852
+DNS: exporter-test10-depwdmvx.srv.ravcloud.com
+
+
+
+Add the disks to the exporter VM:
+# python ravellodisks2glance.py --blueprint OPTLC-OSP13_Foundations-v0.13 --output OSPF --user alberto.gonzalez@redhat.com --password blabla  -a 3125680933596 -m 389502467804585 --host exporter-test10-depwdmvx.srv.ravcloud.com --auth-url http://169.47.17.15:5000/v3 --auth-user admin --auth-password somepassword
+
+Copy your key to the server
+# ssh-copy-id root@exporter-test10-depwdmvx.srv.ravcloud.com
+
+Upload the disks to the OSP
+# ansible-playbook -i OSPF/playbook_import_disks.hosts OSPF/playbook_import_disks.yaml
+
+
+(NOTE)
+Sometimes it is a bit weird and the exporter VM starts with incorrect disk, running ctrl-alt-supr will boot with the correct root disk.

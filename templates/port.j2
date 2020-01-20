@@ -3,9 +3,23 @@
     properties:
       network: { get_resource: {{network}}_network }
       mac_address: "{{ mac }}"
+      {% if services %}
+      security_groups:
+        - {{ vm }}_services_sg
+      {% else %}
       port_security_enabled: false
+      {% endif %}
       {% if ip_address %}
       fixed_ips:
         - {subnet: {get_resource: {{network}}_subnet}, ip_address: "{{ ip_address }}"}
       {% endif %}
+    {% if depends or services %}
+    depends_on:
+      {% if depends %}
+      - {{ depends }}_port
+      {% endif %}
+      {% if services %}
+      - {{ vm }}_services_sg
+      {% endif %}
+    {% endif%}
 

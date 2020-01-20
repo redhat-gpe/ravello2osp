@@ -1,0 +1,45 @@
+  dns_servers:
+    type: OS::Heat::Value
+    properties:
+      type: string
+      value:
+        list_join:
+          - "\n"
+          - {% for entry in entries %}
+            - list_join: [' ', [{{ entry[1] }}, "{{ entry[0]}}" ]]
+            {% endfor %}
+  dnsserver_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: dnsserver_sg
+      rules:
+      - {port_range_max: 53, port_range_min: 53, protocol: udp, remote_ip_prefix: "0.0.0.0/0"}
+
+  dnsserver_server:
+    type: OS::Nova::Server
+    depends_on:
+      - dnsserver_sg
+    properties:
+      name: "internaldns"
+      image: "centos7"
+      config_drive: True
+      flavor: "m1.small"
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/sh
+            echo "Start123" | passwd --stdin root
+            echo nameserver 8.8.8.8 > /etc/resolv.conf
+            echo "$hosts$" >> /etc/hosts
+            sed -i "s/REPL/$GUID$/" /etc/hosts
+            yum install -y dnsmasq
+            systemctl enable --now dnsmasq
+          params:
+            "$hosts$": { get_attr: [dns_servers, value] }
+            "$GUID$": { get_param: project_guid }
+         
+      security_groups: [dnsserver_sg]
+      networks: 
+       - network: { get_resource: {{ network }}_network }
+         fixed_ip: {{ dnsip }}

@@ -1,0 +1,68 @@
+- hosts: all
+  gather_facts: False
+  vars:
+    project_name: "dev-ansible-tower-implementation-3.3-v6"
+    images:
+      
+      - ['image', 'vda', '0bastion-vol1', '10']  
+      
+      - ['image', 'vdb', '1tower-vda', '40']  
+      
+      - ['image', 'vdc', '2workstation-vda', '10']  
+      
+      - ['image', 'vdd', '3servera-vda', '10']  
+      
+      - ['image', 'vde', '3serverb-vda', '10']  
+      
+      - ['image', 'vdf', '3serverc-vda', '10']  
+      
+      - ['image', 'vdg', '3serverd-vda', '10']  
+      
+      - ['image', 'vdh', '3servere-vda', '10']  
+      
+      - ['image', 'vdi', '3serverf-vda', '10']  
+      
+      - ['image', 'vdj', '4classroom-vda', '50']  
+      
+      - ['image', 'vdk', '4utility-vda', '10']  
+      
+
+  tasks:
+    - name: Remove from the VM the directory /root/images
+      file:
+        path: /root/images/
+        state: absent
+    - name: Create in the VM the directory /root/images
+      file:
+        path: /root/images/
+        state: directory
+    - name: Install qemu-img
+      yum: name=qemu-img state=present
+
+    - name: Convert the disks attached to raw
+      command: qemu-img convert -O raw -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
+      loop:  "{{ images }}"
+
+    - name: Upload the images to OSP
+      os_image:
+        auth: 
+         auth_url: http://169.47.188.15:5000
+         project_name: admin
+         username: admin
+         password: T4g9fYEfwCuDCwgybCmGq6cxg
+         user_domain_name: Default
+         project_domain_name: Default
+        name: "{{ project_name }}-{{ item[2] }}"
+        container_format: bare
+        disk_format: raw
+        is_public: True
+        filename: "/root/images/{{ item[2] }}"
+      loop:  "{{ images }}"
+
+    - name: Shutdown the VM
+      command: shutdown -h now
+      ignore_errors: true
+      tags:
+      - shutdown
+
+

@@ -2,15 +2,12 @@
   gather_facts: false
   vars:
     project: "OPTLC-OSPD_Basic-v13.7-bp"
-    username: "{{ guid }}"
-    cf_user: admin
-    cf_pw: NjA1YWIxYmU4OTFhN2Y4MzM4ZTlhZWYw
-    service_id: 3    
-    api_uri: https://169.47.15.178/
-    provider_id: 3
-    max_retries: 10
-    retry_interval: 20
+    api_user: "{{ guid }}"
   vars_prompt:
+    - prompt: "Name of the BP"
+      name: project
+      private: no
+
     - prompt: "GUID for the project?"
       name: guid
       private: no
@@ -27,50 +24,30 @@
       name: directory
       private: no
 
+    - prompt: "OSP Auth url"
+      name: auth_url
+      private: no
+
+    - prompt: "OSP Auth user"
+      name: auth_user
+      private: no
+
+    - prompt: "OSP Auth password"
+      name: auth_pass
+      private: no
+
   tasks:
     - set_fact: project_name="{{ project | replace('-bp','') | replace('OPTLC', 'OTLC-LAB-' + user) }}-{{ guid }}"
-    - set_fact: userpw="{{ lookup('password', '/dev/null length=20 chars=ascii_letters') }}"
-    - debug: var=service_id
 
-    - name: Get CloudForms auth_token
-      uri:
-        url: "{{ api_uri }}/api/auth"
-        method: GET
-        validate_certs: no
-        user: "{{ cf_user }}"
-        password: "{{ cf_pw }}"
-        headers:
-          accept: "application/json"
-        return_content: yes
-      register: uri_output
-
-    - set_fact: auth_token="{{ uri_output.json.auth_token }}"
-
-    - name: Set the Provider URL
-      set_fact:
-        provider_url: "{{ api_uri }}/api/providers/{{ provider_id }}"
-
-    - debug: var=provider_url
-
-    - name: Set the Service URL
-      set_fact:
-        svc_url: "/api/services/{{ service_id }}"
-    - debug: var=svc_url
-
-
-    - debug: var=userpw
-
-    - command: "date +%s"
-      register: date
-
+    - set_fact: api_pass="{{ lookup('password', '/dev/null length=20 chars=ascii_letters') }}"
 
     - name: Check if project exists
       os_project_facts:
         auth: 
-         auth_url: http://169.47.15.163:5000/v3
+         auth_url: "{{ auth_url }}"
          project_name: admin
-         username: admin
-         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         username: "{{ auth_user }}"
+         password: "{{ auth_pass }}"
          user_domain_name: Default
          project_domain_name: Default
         name: "{{ project_name }}"
@@ -79,46 +56,38 @@
     - fail: msg="Project exists, can't continue"
       when: project_exists.ansible_facts.openstack_projects
 
+    - command: "date +%s"
+      register: date
 
     - name: Create project and assign permission
+      register: stack_admin_output
       os_stack:
         auth: 
-         auth_url: http://169.47.15.163:5000/v3
+
+         auth_url: "{{ auth_url }}"
          project_name: admin
-         username: admin
-         password: XdmdfJKt4cv9zpyn2Wvdr827b
+         username: "{{ auth_user }}"
+         password: "{{ auth_pass }}"
          user_domain_name: Default
          project_domain_name: Default
         name: "create-project-{{project_name}}"
         template: "{{ directory }}/stack_admin.yaml"
         parameters:
           project_name: "{{ project_name }}" 
+          project_guid: "{{ guid }}" 
           project_description: "created:{{ date.stdout }}"
-          project_user: "{{ username }}"
-          project_userpw: "{{ userpw }}"
+          project_api_user: "{{ api_user }}"
+          project_api_pass: "{{ api_pass }}"
+          blueprint: "{{ project }}"
 
-    - debug: var=userpw
-    - debug: var=username
-
-    - name: auth
-      register: objects
-      os_auth:
-        auth: 
-         auth_url: http://169.47.15.163:5000/v3
-         project_name: "{{ project_name }}"
-         username: "{{ username }}"
-         password: "{{ userpw }}"
-         user_domain_name: Default
-         project_domain_name: Default
- 
     - name: Create objects inside the project
-      register: objects
+      register: stack_user_output
       os_stack:
         auth: 
-         auth_url: http://169.47.15.163:5000/v3
+         auth_url: "{{ auth_url }}"
          project_name: "{{ project_name }}"
-         username: "{{ username }}"
-         password: "{{ userpw }}"
+         username: "{{ api_user }}"
+         password: "{{ api_pass }}"
          user_domain_name: Default
          project_domain_name: Default
         name: "create-objects-{{project_name}}"
@@ -126,115 +95,37 @@
         parameters:
           project_name: "{{ project_name }}" 
           public_net_id: "{{ external }}" 
-          userdata: ""
-    - set_fact: fip="{{ objects.stack.outputs[0].output_value }}"
-    - debug: msg="Floating IP {{ fip }} assigned"
-    - uri:
-       url: https://api.softlayer.com/rest/v3/SoftLayer_Dns_Domain/2802535/createARecord
-       user: josegonz
-       password: 2c887f0eb0dcc6b2720b488322775fac3b0cf59c77c7364cbff65acaaf307d25 
-       method: POST
-       body_format: json
-       body: {'parameters':["workstation-{{guid}}","{{ fip }}","3600"]}
-    - debug: msg="DNS workstation-{{ guid }}.lab.opentlc.com assigned"
-
-    - set_fact: ospvms="{{ objects.stack.outputs[1].output_value }}"
-
-    - name: Refresh provider in CloudForms
-      uri:
-        url: "{{ provider_url }}"
-        method: POST
-        body:
-          action: refresh
-        body_format: json
-        validate_certs: False
-        headers:
-          X-Auth-Token: "{{ auth_token }}"
-          Content-Type: "application/json" 
-        status_code: 200
-      register: output
-    - debug: var=output
-
-    - name: set the task href
+          api_url: "{{ auth_url }}"
+          api_user: "{{ api_user }}"
+          api_pass: "{{ api_pass }}"
+          project_guid: "{{ guid }}"
+    #- set_fact: fip="{{ objects.stack.outputs[0].output_value }}"
+    #- debug: msg="Floating IP {{ fip }} assigned"
+    #
+    - name: Save infra_key content
       set_fact:
-        task_url: "{{ output.json.task_href}}"
-    - debug: var=task_url
+        infra_private_key_content: "{{ stack_user_output | json_query(query) }}"
+      vars:
+        query: "stack.outputs[?@.output_key=='openstack_project_infra_key'].output_value|[0]"
 
-    - name: Wait for the refresh to end
-      uri:
-        url: "{{ task_url }}"
-        method: GET
-        validate_certs: False
-        headers:
-          X-Auth-Token: "{{ auth_token }}"
-          Content-Type: "application/json" 
-        status_code: 200
-      register: task_result
-      until: task_result.json.state == 'Finished' or task_result.json.status == 'Error'
-      failed_when: task_result.json.status == 'Error'
-      retries: "{{max_retries}}"
-      delay: "{{retry_interval}}"
-    - debug: var=task_result
-
-    - set_fact: filter=""
-    - set_fact: filter="{{ filter}}&filter[]=or%20uid_ems={{ item }}"
-      loop: "{{ospvms}}"
-    
-    - set_fact: find_vm_url="{{ api_uri }}/api/vms?expand=resources&attributes=href,uid_ems&{{ filter }}"
-    - debug: var=find_vm_url
-
-    - name: Call to CloudForms to find href for new_vm_uuid
-      uri:
-        url: "{{ find_vm_url }}"
-        method: GET
-        validate_certs: no
-        headers:
-           X-Auth-Token: "{{ auth_token }}"
-           Content-Type: "application/json"
-        body_format: json
-        return_content: yes
-      register: token_output
-
-    - debug: var=token_output
-
-    - name: Create an array of vms
+    - name: Set infra_ssh_key path
       set_fact:
-        vms: "{{ vms|default([]) + [ { 'href': svc_url, 'resource':  { 'href': item.href } } ] }}"
-      with_items:
-        - "{{ token_output.json.resources }}"
+        infra_ssh_key: "{{ directory}}/{{ guid }}_infra_ssh_key.pem"
 
-    - name: Change owner of the VM
-      uri:
-        url: "{{ item.href }}"
-        method: POST
-        body_format: json
-        body:
-          action: set_owner
-          resource : { 'owner': '{{ user }}' }
-        validate_certs: False
-        headers:
-          X-Auth-Token: "{{ auth_token }}"
-          Content-Type: "application/json"
-        status_code: 200
-      register: output
-      with_items:
-        - "{{ token_output.json.resources }}"
+    - name: Copy infra_key content to output_dir
+      copy:
+        dest: "{{ infra_ssh_key }}"
+        content: "{{ infra_private_key_content }}"
+        mode: 0600
 
-    - debug: var=vms
-    
-    - name: Register vm with the service
-      uri:
-        url: "{{ api_uri }}/api/services"
-        method: POST
-        body_format: json
-        body:
-          action: add_resource
-          resources : "{{ vms }}"
-        validate_certs: False
-        headers:
-          X-Auth-Token: "{{ auth_token }}"
-          Content-Type: "application/json"
-        status_code: 200
-      register: output
+    - debug: var=stack_user_output
 
-    - debug: var=output.json.results[0].success
+    - name: print out user.info
+      debug:
+        msg: "user.info: ssh -i {{ directory}}/{{ guid }}_infra_ssh_key.pem cloud-user@{{ item.output_value }}"
+      when: '"_fip" in item.output_key'
+      loop:
+        "{{ stack_user_output.stack.outputs }}"
+
+
+

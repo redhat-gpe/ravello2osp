@@ -1,0 +1,88 @@
+#!/bin/bash
+
+if [ ! -f creds.inc ]
+then
+  echo "Please create creds.inc from creds.inc.example"
+  exit 1
+fi
+
+. creds.inc
+
+if [ -z "$1" ]
+then
+  echo "Usage: $0 <blueprint>"
+  exit 1
+fi
+
+blueprint=$1
+
+outputdir="${blueprint}-playbooks"
+
+python3 ravello2osp.py  --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass
+
+if [ $? -ne 0 ]
+then
+  echo "ravello2osp.py failed."
+  exit 1
+fi
+
+outfile=/tmp/.convert.$$
+appName="exportdisks.$$"
+
+if [ -n "$pubKeyFile" ]
+then
+  echo "Using public key $pubKeyFile"
+  pk="--pubkeyfile $pubKeyFile"
+else
+  echo "Using password auth"
+  pk=""
+fi
+
+python3 create_ravello_disks_project.py -n $appName -u $ravelloUser -p $ravelloPass $pk > $outfile
+
+if [ $? -ne 0 ]
+then
+  echo "create_ravello_disks_project.py failed."
+  exit 1
+fi
+
+appID=`grep 'App id' $outfile|cut -f2 -d:`
+vmID=`grep 'VM id' $outfile|cut -f2 -d:`
+ravelloHost=`grep 'DNS:' $outfile|cut -f2 -d:|sed 's/ //g'`
+
+rm -f $outfile
+
+python3 ravellodisks2glance.py --auth-url $ospAuthURL --auth-user $ospUser --auth-password $ospPass -o $outputdir -bp $blueprint -u $ravelloUser -p $ravelloPass -a $appID -m $vmID --host $ravelloHost --osp-project $ospProject
+
+if [ $? -ne 0 ]
+then
+  echo "ravellodisks2glance.py failed."
+  exit 1
+fi
+
+echo "Waiting for SSH service to start on VM."
+sleep 35
+
+if [ -z "$pubKeyFile" ]
+then
+  echo "Enter the root password for exporter VM 'r3dh4t1!'"
+  ssh-copy-id -o StrictHostKeyChecking=no root@${ravelloHost}
+  if [ $? -ne 0 ]
+  then
+    echo "ssh-copy-id failed."
+    exit 1
+  fi
+fi
+
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook --skip-tags shutdown -i $outputdir/playbook_import_disks.hosts $outputdir/playbook_import_disks.yaml -u root
+
+if [ $? -ne 0 ]
+then
+  echo "ansible-playbook failed."
+  exit 1
+fi
+
+curl -s -X DELETE --user ${ravelloUser}:${ravelloPass} https://cloud.ravellosystems.com/api/v1/applications/${appID}
+
+echo "The HEAT templates are in $outputdir/{stack_admin.yaml,stack_user.yaml}"
