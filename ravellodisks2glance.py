@@ -219,7 +219,7 @@ client.publish_application_updates(app)
 client.reload(vm)
 
 
-tplimportdisks = env.get_template('import_disks.j2')
+tplimportdisks = env.get_template('export_disks.j2')
 import_disks = tplimportdisks.render(
     images=import_images, project_name=bpname, format=image_format,
     auth_url=auth_url, auth_user=auth_user, auth_password=auth_password,
@@ -237,7 +237,6 @@ fp = open(output_dir + "/playbook_import_disks.hosts", "w")
 fp.write("[all]\n%s" % exporterhost)
 fp.close()
 
-sys.exit(0)
 if vm["state"] == 'STOPPED':
     client.start_vm(app, vm)
     while vm["state"] != "STARTED":
