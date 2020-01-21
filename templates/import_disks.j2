@@ -2,10 +2,11 @@
   gather_facts: False
   vars:
     project_name: "{{ project_name }}"
-    ibm_api_key: "" # Used to upload the disks to IBM Cloud Storage
-    ibm_bucket_name: ""
-    ibm_endpoint: "https://s3.wdc.us.cloud-object-storage.appdomain.cloud"
-    ibm_resource_instance_id: "321e756a-2b5a-4a7b-8acb-bafa42cc1882"
+    ibm_api_key: "{{ ibm_api_key }}"
+    ibm_bucket_name: "{{ ibm_bucket_name }}"
+    ibm_endpoint: "{{ ibm_endpoint }}"
+    ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
+    ibm_resource_id: "{{ ibm_auth_endpoint }}"
     images:
       {% for disk in images %}
       - ['{{ disk.type }}', '{{ disk.device }}', '{{ disk.name }}', '{{ disk.size }}']  
@@ -16,92 +17,39 @@
       file:
         path: /root/images/
         state: absent
+
     - name: Create in the VM the directory /root/images
       file:
         path: /root/images/
         state: directory
+
     - name: Install qemu-img
-      yum: name=qemu-img state=present
+      yum:
+        name: qemu-img
+        state: present
 
-    - name: Convert the disks attached to {% endraw %}{{ format }}{% raw %}
-      command: qemu-img convert -O {% endraw %}{{ format }}{% raw %} -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
-      loop:  "{{ images }}"
+#    - name: Upload images to IBM Cloud Storage
+#      when: ibm_api_key != "" and ibm_bucket_name != ""
+#      block:
+#        - name: Convert the disks attached to qcow2
+#          command: qemu-img convert -O qcow2 -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
+#          loop:  "{{ images }}"
 
-    - name: Upload the images to OSP
-      os_image:
-        auth: 
-         auth_url: {% endraw %}{{auth_url}}{% raw %}
-         project_name: {% endraw %}{{ osp_project }}{% raw %}
-         username: {% endraw %}{{auth_user}}{% raw %}
-         password: {% endraw %}{{auth_password}}{% raw %}
-         user_domain_name: Default
-         project_domain_name: Default
-        name: "{{ project_name }}-{{ item[2] }}"
-        container_format: bare
-        disk_format: raw
-        is_public: True
-        filename: "/root/images/{{ item[2] }}"
-      loop:  "{{ images }}"
+#        - name: Upload file to bucket
+#          ibm_cos:
+#            ibm_endpoint: "{{ ibm_endpoint }}"
+#            ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
+#            ibm_api_key: "{{ ibm_api_key }}"
+#            ibm_resource_id: "{{ ibm_resource_id }}"
+#            mode: put
+#            bucket: "{{ ibm_bucket_name }}"
+#            object: "/{{ project_name }}/{{ item[2] }}.qcow2"
+#            src: "/root/images/{{ item[2] }}"
+#          loop: "{{ images }}"
 
-    - name: Upload images to IBM Cloud Storage
-      when: ibm_api_key != "" and ibm_bucket_name != ""
-      block:
-        - name: Remove from the VM the directory /root/images
-          file:
-            path: /root/images/
-            state: absent
-        - name: Create in the VM the directory /root/images
-          file:
-            path: /root/images/
-            state: directory
-
-        - name: Convert the disks attached to qcow2
-          command: qemu-img convert -O qcow2 -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
-          loop:  "{{ images }}"
-
-
-        - name: Authentication against IAM IBM Cloud
-          uri:
-           url: "https://iam.cloud.ibm.com/identity/token"
-           method: "POST"
-           body_format: "form-urlencoded"
-           body:
-            apikey: "{{ ibm_api_key }}"
-            response_type: "cloud_iam"
-            grant_type: "urn:ibm:params:oauth:grant-type:apikey"
-          register: authtoken
-
-        - set_fact: access_token="{{ authtoken.json.access_token }}"
-
-
-        - name: Create a bucket
-          uri:
-            url: "{{ ibm_endpoint }}/{{ ibm_bucket_name }}"
-            method: "PUT"
-            headers:
-              Authorization: "bearer {{ access_token }}"
-              ibm-service-instance-id: "{{ ibm_resource_instance_id }}"
-
-        - debug: msg="Bucket created {{ ibm_bucket_name }}"
-     
-        - name: Upload file to bucket
-          uri:
-            url: "{{ ibm_endpoint }}/{{ ibm_bucket_name  }}/{{ item[2] }}.qcow2"
-            method: "PUT"
-            src: "/root/images/{{ item[2] }}"
-            remote_src: True
-            headers:
-              Authorization: "bearer {{ access_token }}"
-              ibm-service-instance-id: "{{ ibm_resource_instance_id }}"
-              Content-Type: "application/octet-stream"
-          loop:  "{{ images }}"
- 
-
-    - name: Shutdown the VM
-      command: shutdown -h now
-      ignore_errors: true
-      tags:
-      - shutdown
-
+#    - name: Shutdown the VM
+#      command: shutdown -h now
+#      ignore_errors: true
+#      tags:
+#      - shutdown
 {% endraw %}
-

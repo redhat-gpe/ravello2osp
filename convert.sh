@@ -18,7 +18,7 @@ blueprint=$1
 
 outputdir="${blueprint}-playbooks"
 
-python3 ravello2osp.py  --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass
+python ravello2osp.py  --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass
 
 if [ $? -ne 0 ]
 then
@@ -38,7 +38,7 @@ else
   pk=""
 fi
 
-python3 create_ravello_disks_project.py -n $appName -u $ravelloUser -p $ravelloPass $pk > $outfile
+python create_ravello_disks_project.py -n $appName -u $ravelloUser -p $ravelloPass $pk > $outfile
 
 if [ $? -ne 0 ]
 then
@@ -52,7 +52,10 @@ ravelloHost=`grep 'DNS:' $outfile|cut -f2 -d:|sed 's/ //g'`
 
 rm -f $outfile
 
-python3 ravellodisks2glance.py --auth-url $ospAuthURL --auth-user $ospUser --auth-password $ospPass -o $outputdir -bp $blueprint -u $ravelloUser -p $ravelloPass -a $appID -m $vmID --host $ravelloHost --osp-project $ospProject
+python ravellodisks2glance.py --auth-url $ospAuthURL --auth-user $ospUser --auth-password $ospPass \
+  -o $outputdir -bp $blueprint -u $ravelloUser -p $ravelloPass -a $appID -m $vmID --host $ravelloHost \
+  --osp-project $ospProject --ibm-auth-endpoint $ibm_auth_endpoint --ibm-endpoint $ibm_endpoint \
+  --ibm-api-key $ibm_api_key --ibm-bucket-name $ibm_bucket_name --ibm-resource-id "$ibm_resource_id"
 
 if [ $? -ne 0 ]
 then
@@ -75,6 +78,7 @@ then
 fi
 
 export ANSIBLE_HOST_KEY_CHECKING=False
+cp -a library $outputdir
 ansible-playbook --skip-tags shutdown -i $outputdir/playbook_import_disks.hosts $outputdir/playbook_import_disks.yaml -u root
 
 if [ $? -ne 0 ]

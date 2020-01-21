@@ -107,7 +107,7 @@ if args["blueprint"]:
     bp = client.get_blueprints(filter={"name": bpname})[0]
     config = client.get_blueprint(bp["id"])
     fp = open(output_dir + "/blueprint.json", "w")
-    fp.write(json.dumps(config))
+    fp.write(json.dumps(config, indent=2))
     fp.close()
 else:
     config = json.loads(open(json_file, "r").read())

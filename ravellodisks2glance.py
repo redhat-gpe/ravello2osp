@@ -39,6 +39,18 @@ options.add_argument("--auth-user", required=True,
 options.add_argument("--auth-password", required=True, 
                      help="OpenStack auth password")
 
+options.add_argument("--ibm-auth-endpoint",
+                     help="IBM Auth Endpoint. default(https://iam.cloud.ibm.com/identity/token",
+                     default="https://iam.cloud.ibm.com/identity/token")
+options.add_argument("--ibm-endpoint", required=True,
+                     help="IBM Cloud Storage endpoint")
+options.add_argument("--ibm-api-key", required=True,
+                     help="IBM API Key")
+options.add_argument("--ibm-bucket-name", required=True,
+                     help="Bucket name to store all images")
+options.add_argument("--ibm-resource-id", required=True,
+                     help="IBM Resource ID")
+
 options.add_argument("-sv", "--single-vm", required=False, default=None,
                      help="Specify with VM name to only setup a single VM's disks.")
 
@@ -76,6 +88,12 @@ auth_password = args['auth_password']
 osp_project = args['osp_project']
 exporterhost = args["host"]
 
+ibm_api_key = args['ibm_api_key']
+ibm_bucket_name =  args['ibm_bucket_name']
+ibm_endpoint = args['ibm_endpoint']
+ibm_auth_endpoint = args['ibm_auth_endpoint']
+ibm_resource_id = args['ibm_resource_id']
+
 disk_prefix = args['disk_prefix']
 image_format = args['image_format']
 start_conv_character = args['start_conv_character']
@@ -88,7 +106,6 @@ client.login(args["user"], args["password"])
 bp = client.get_blueprints(filter={"name": bpname})[0]
 config = client.get_blueprint(bp["id"])
 env = Environment(loader=file_loader)
-
 
 network_config = config["design"]["network"]
 vms_config = config["design"]["vms"]
@@ -162,7 +179,6 @@ if vm["state"] == 'STARTED':
         time.sleep(30)
 
 # Remove current disks
-
 if len(vm["hardDrives"]) > 1:
     root_disk = vm["hardDrives"][0]
     vm["hardDrives"] = [root_disk]
@@ -207,8 +223,9 @@ tplimportdisks = env.get_template('import_disks.j2')
 import_disks = tplimportdisks.render(
     images=import_images, project_name=bpname, format=image_format,
     auth_url=auth_url, auth_user=auth_user, auth_password=auth_password,
-    osp_project=osp_project
-    )
+    osp_project=osp_project,ibm_api_key=ibm_api_key,ibm_bucket_name=ibm_bucket_name,
+    ibm_endpoint=ibm_endpoint,ibm_auth_endpoint=ibm_auth_endpoint,ibm_resource_id=ibm_resource_id
+)
 
 print("INFO: Generated %s" % (output_dir + "/playbook_import_disks.yaml"))
 fp = open(output_dir + "/playbook_import_disks.yaml", "w")

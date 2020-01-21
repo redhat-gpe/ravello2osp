@@ -14,3 +14,25 @@ export ospAuthURL='http://169.47.188.15:5000'
 
 # Comment this out if you want to use password authentication otherwise it will inject this password into the exporter VM in the root user
 export pubKeyFile="/home/myuser/.ssh/id_rsa.pub"
+
+# Host used to add all disks, convert the bp disks to qcow2 image
+# export ravelloHost="exporter-exportdisks87370-tdmwynq4.srv.ravcloud.com"
+
+
+# To get information about the IBM go to https://cloud.ibm.com/iam/overview -> Resource List -> IBMCOS -> Service credentials -> Service Credentials-1 -> View Credentials
+# Mode details to create credentials https://cloud.ibm.com/docs/resources?topic=resources-service_credentials
+
+# IBM API Key
+export ibm_api_key="ABCD4577"
+
+# IBM COS Bucket name used to store the disk images
+export ibm_bucket_name="<<bucket_name>>"
+
+# IBM COS Endpoint
+export ibm_endpoint="https://s3.us-east.cloud-object-storage.appdomain.cloud"
+
+# IBM Auth endpoint (default is https://iam.cloud.ibm.com/identity/toke)
+export ibm_auth_endpoint="https://iam.cloud.ibm.com/identity/token"
+
+# IBM Resource ID
+export ibm_resource_id="crn:v1:bluemix:public:cloud-object-storage:global:a/42479cf18c194be58cbfc2ab1a476649:f9a99873-8bf9-409a-9ba7-325738f6ABCD::"
