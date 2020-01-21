@@ -28,28 +28,33 @@
         name: qemu-img
         state: present
 
-#    - name: Upload images to IBM Cloud Storage
-#      when: ibm_api_key != "" and ibm_bucket_name != ""
-#      block:
-#        - name: Convert the disks attached to qcow2
-#          command: qemu-img convert -O qcow2 -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
-#          loop:  "{{ images }}"
+    - name: Install ibm-cos-sdk using pip
+      pip:
+        name: ibm-cos-sdk
+        state: present
 
-#        - name: Upload file to bucket
-#          ibm_cos:
-#            ibm_endpoint: "{{ ibm_endpoint }}"
-#            ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
-#            ibm_api_key: "{{ ibm_api_key }}"
-#            ibm_resource_id: "{{ ibm_resource_id }}"
-#            mode: put
-#            bucket: "{{ ibm_bucket_name }}"
-#            object: "/{{ project_name }}/{{ item[2] }}.qcow2"
-#            src: "/root/images/{{ item[2] }}"
-#          loop: "{{ images }}"
+    - name: Upload images to IBM Cloud Storage
+      when: ibm_api_key != "" and ibm_bucket_name != ""
+      block:
+        - name: Convert the disks attached to qcow2
+          command: qemu-img convert -O qcow2 -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
+          loop:  "{{ images }}"
 
-#    - name: Shutdown the VM
-#      command: shutdown -h now
-#      ignore_errors: true
-#      tags:
-#      - shutdown
+        - name: Upload file to bucket
+          ibm_cos:
+            ibm_endpoint: "{{ ibm_endpoint }}"
+            ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
+            ibm_api_key: "{{ ibm_api_key }}"
+            ibm_resource_id: "{{ ibm_resource_id }}"
+            mode: put
+            bucket: "{{ ibm_bucket_name }}"
+            object: "/{{ project_name }}/{{ item[2] }}.qcow2"
+            src: "/root/images/{{ item[2] }}"
+          loop: "{{ images }}"
+
+    - name: Shutdown the VM
+      command: shutdown -h now
+      ignore_errors: true
+      tags:
+      - shutdown
 {% endraw %}
