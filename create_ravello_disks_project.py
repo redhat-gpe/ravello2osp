@@ -32,7 +32,16 @@ if not args["user"] or not args["password"]:
 client = RavelloClient()
 client.login(args["user"], args["password"])
 bp = client.get_blueprints(filter={"name": bpname})[0]
-created = client.create_application({"name": args["name"], "description": "Based on BP %s" % bpname, "baseBlueprintId": bp["id"]})
+
+published = False
+
+try:
+  created = client.get_application_by_name(args["name"])
+  published = True
+except RavelloError as e:
+ created = client.create_application(
+   {"name": args["name"], "description": "Based on BP %s" % bpname, "baseBlueprintId": bp["id"]})
+
 appid = created["id"]
 vmid = created["design"]["vms"][0]["id"]
 dns = created["design"]["vms"][0]["networkConnections"][0]["ipConfig"]["fqdn"]
@@ -73,4 +82,5 @@ chpasswd:
     print("Error, cannot find specified public key file %s!  Exiting." % (pubkeyfile))
     sys.exit(-1)
 
-client.publish_application(created, {"startAllVms": False})
+if not published:
+  client.publish_application(created, {"startAllVms": False})
