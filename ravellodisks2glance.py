@@ -30,6 +30,8 @@ options.add_argument("-c", "--start-conv-character", required=False, default='a'
                           " the max number of disks to mount.")
 options.add_argument("--host", required=True, 
                      help="Server to connect to export the disks")
+options.add_argument("--importhost", required=True,
+                     help="Server to connect to export the disks")
 options.add_argument("--osp-project", required=False, default='admin',
                      help="OpenStack project")
 options.add_argument("--auth-url", required=True, 
@@ -87,6 +89,7 @@ auth_user = args['auth_user']
 auth_password = args['auth_password']
 osp_project = args['osp_project']
 exporterhost = args["host"]
+importhost = args["importhost"]
 
 ibm_api_key = args['ibm_api_key']
 ibm_bucket_name =  args['ibm_bucket_name']
@@ -218,13 +221,25 @@ while client.update_vm(app, vm) == None:
 client.publish_application_updates(app)
 client.reload(vm)
 
+# Export disks from Ravello and send to IBM
+tplexportdisks = env.get_template('export_disks.j2')
+export_disks = tplexportdisks.render(
+    images=import_images, project_name=bpname, ibm_api_key=ibm_api_key, ibm_bucket_name=ibm_bucket_name,
+    ibm_endpoint=ibm_endpoint, ibm_auth_endpoint=ibm_auth_endpoint, ibm_resource_id=ibm_resource_id
+)
 
-tplimportdisks = env.get_template('export_disks.j2')
+print("INFO: Generated %s" % (output_dir + "/playbook_export_disks.yaml"))
+fp = open(output_dir + "/playbook_export_disks.yaml", "w")
+fp.write(export_disks)
+fp.close()
+
+# Download disks from IBM, convert to raw and upload to Glance
+tplimportdisks = env.get_template('import_disks.j2')
 import_disks = tplimportdisks.render(
-    images=import_images, project_name=bpname, format=image_format,
-    auth_url=auth_url, auth_user=auth_user, auth_password=auth_password,
-    osp_project=osp_project,ibm_api_key=ibm_api_key,ibm_bucket_name=ibm_bucket_name,
-    ibm_endpoint=ibm_endpoint,ibm_auth_endpoint=ibm_auth_endpoint,ibm_resource_id=ibm_resource_id
+    images=import_images, project_name=bpname, osp_auth_url=auth_url, osp_username=auth_user,
+    osp_password=auth_password, osp_project=osp_project, ibm_api_key=ibm_api_key,
+    ibm_bucket_name=ibm_bucket_name, ibm_endpoint=ibm_endpoint,
+    ibm_auth_endpoint=ibm_auth_endpoint, ibm_resource_id=ibm_resource_id
 )
 
 print("INFO: Generated %s" % (output_dir + "/playbook_import_disks.yaml"))
@@ -234,7 +249,8 @@ fp.close()
 
 print("INFO: Generated %s" % (output_dir + "/playbook_import_disks.hosts"))
 fp = open(output_dir + "/playbook_import_disks.hosts", "w")
-fp.write("[all]\n%s" % exporterhost)
+fp.write("[export]\n%s" % exporterhost)
+fp.write("\n[import]\n%s\n" % importhost)
 fp.close()
 
 if vm["state"] == 'STOPPED':

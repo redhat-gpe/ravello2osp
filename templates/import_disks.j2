@@ -1,0 +1,92 @@
+- hosts: import
+  gather_facts: False
+  become: true
+  vars:
+    project_name: "{{ project_name }}"
+    ibm_api_key: "{{ ibm_api_key }}"
+    ibm_bucket_name: "{{ ibm_bucket_name }}"
+    ibm_endpoint: "{{ ibm_endpoint }}"
+    ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
+    ibm_resource_id: "{{ ibm_resource_id }}"
+    osp_auth_url: "{{ osp_auth_url }}"
+    osp_username: "{{ osp_username }}"
+    osp_password: "{{ osp_password }}"
+    osp_project: "{{ osp_project }}"
+    images:
+      {% for disk in images %}
+      - ['{{ disk.type }}', '{{ disk.device }}', '{{ disk.name }}', '{{ disk.size }}']  
+      {% endfor %}
+{% raw %}
+  tasks:
+    - name: Remove from the VM the directory /images
+      file:
+        path: /images/import
+        state: absent
+
+    - name: Create in the VM the directory /images
+      file:
+        path: /images/import
+        state: directory
+
+    - name: Install qemu-img
+      yum:
+        name: qemu-img
+        state: present
+
+    - name: Install ibm-cos-sdk using pip
+      pip:
+        name: ibm-cos-sdk
+        state: present
+
+    #  subscription-manager repos --enable rhel-7-server-openstack-14-rpms
+    # yum install python2-openstacksdk.noarch
+    - name: Install openstacksdk using pip
+      pip:
+        name: openstacksdk
+        version: 0.24.0
+        state: present
+
+
+    - name: Download images to IBM Cloud Storage
+      when: ibm_api_key != "" and ibm_bucket_name != ""
+      block:
+        - name: Download images from IBM bucket
+          ibm_cos:
+            ibm_endpoint: "{{ ibm_endpoint }}"
+            ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
+            ibm_api_key: "{{ ibm_api_key }}"
+            ibm_resource_id: "{{ ibm_resource_id }}"
+            mode: get
+            bucket: "{{ ibm_bucket_name }}"
+            object: "{{ project_name }}/{{ item[2] }}.qcow2"
+            dest: "/images/import/{{ item[2] }}.qcow2"
+          loop: "{{ images }}"
+
+        - name: Convert the disks attached to raw
+          command: qemu-img convert -O raw -p "/images/import/{{ item[2] }}.qcow2" "/images/import/{{ item[2] }}.raw"
+          loop:  "{{ images }}"
+
+        - name: Upload image to Glance
+          os_image:
+            auth:
+             auth_url: "{{ osp_auth_url }}"
+             project_name: "{{ osp_project }}"
+             username: "{{ osp_username }}"
+             password: "{{ osp_password }}"
+             user_domain_name: Default
+             project_domain_name: Default
+            name: "{{ project_name }}-{{ item[2] }}"
+            container_format: bare
+            disk_format: raw
+            is_public: True
+            filename: "/images/import/{{ item[2] }}.raw"
+            properties:
+              blueprint: "{{ project_name }}"
+          loop:  "{{ images }}"
+
+    - name: Shutdown the VM
+      command: shutdown -h now
+      ignore_errors: true
+      tags:
+      - shutdown
+{% endraw %}

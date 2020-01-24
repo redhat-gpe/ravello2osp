@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: export
   gather_facts: False
   vars:
     project_name: "{{ project_name }}"
@@ -6,7 +6,7 @@
     ibm_bucket_name: "{{ ibm_bucket_name }}"
     ibm_endpoint: "{{ ibm_endpoint }}"
     ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
-    ibm_resource_id: "{{ ibm_auth_endpoint }}"
+    ibm_resource_id: "{{ ibm_resource_id }}"
     images:
       {% for disk in images %}
       - ['{{ disk.type }}', '{{ disk.device }}', '{{ disk.name }}', '{{ disk.size }}']  
@@ -48,7 +48,7 @@
             ibm_resource_id: "{{ ibm_resource_id }}"
             mode: put
             bucket: "{{ ibm_bucket_name }}"
-            object: "/{{ project_name }}/{{ item[2] }}.qcow2"
+            object: "{{ project_name }}/{{ item[2] }}.qcow2"
             src: "/root/images/{{ item[2] }}"
           loop: "{{ images }}"
 
