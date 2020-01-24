@@ -16,7 +16,9 @@ fi
 
 blueprint=$1
 
-outputdir="${blueprint}-playbooks"
+outputdir="imported/${blueprint}-playbooks"
+
+mkdir -p $outputdir
 
 python ravello2osp.py  --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass
 
@@ -27,7 +29,7 @@ then
 fi
 
 outfile=/tmp/.convert.$$
-appName="exportdisks.$$"
+appName="exporter-app"
 
 if [ -n "$pubKeyFile" ]
 then
@@ -55,7 +57,8 @@ rm -f $outfile
 python ravellodisks2glance.py --auth-url $ospAuthURL --auth-user $ospUser --auth-password $ospPass \
   -o $outputdir -bp $blueprint -u $ravelloUser -p $ravelloPass -a $appID -m $vmID --host $ravelloHost \
   --osp-project $ospProject --ibm-auth-endpoint $ibm_auth_endpoint --ibm-endpoint $ibm_endpoint \
-  --ibm-api-key $ibm_api_key --ibm-bucket-name $ibm_bucket_name --ibm-resource-id "$ibm_resource_id"
+  --ibm-api-key $ibm_api_key --ibm-bucket-name $ibm_bucket_name --ibm-resource-id "$ibm_resource_id" \
+  --importhost $import_host
 
 if [ $? -ne 0 ]
 then
@@ -79,11 +82,19 @@ fi
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 cp -a library $outputdir
+ansible-playbook --skip-tags shutdown -i $outputdir/playbook_import_disks.hosts $outputdir/playbook_export_disks.yaml -u root
+
+if [ $? -ne 0 ]
+then
+  echo "ansible-playbook export disks failed."
+  exit 1
+fi
+
 ansible-playbook --skip-tags shutdown -i $outputdir/playbook_import_disks.hosts $outputdir/playbook_import_disks.yaml -u root
 
 if [ $? -ne 0 ]
 then
-  echo "ansible-playbook failed."
+  echo "ansible-playbook import failed."
   exit 1
 fi
 
