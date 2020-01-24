@@ -18,7 +18,6 @@ export pubKeyFile="/home/myuser/.ssh/id_rsa.pub"
 # Host used to add all disks, convert the bp disks to qcow2 image
 # export ravelloHost="exporter-exportdisks87370-tdmwynq4.srv.ravcloud.com"
 
-
 # To get information about the IBM go to https://cloud.ibm.com/iam/overview -> Resource List -> IBMCOS -> Service credentials -> Service Credentials-1 -> View Credentials
 # Mode details to create credentials https://cloud.ibm.com/docs/resources?topic=resources-service_credentials
 
@@ -36,3 +35,7 @@ export ibm_auth_endpoint="https://iam.cloud.ibm.com/identity/token"
 
 # IBM Resource ID
 export ibm_resource_id="crn:v1:bluemix:public:cloud-object-storage:global:a/42479cf18c194be58cbfc2ab1a476649:f9a99873-8bf9-409a-9ba7-325738f6ABCD::"
+
+# Host used to import all images from IBM COS
+import_host=x.x.x.x
+
