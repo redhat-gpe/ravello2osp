@@ -421,6 +421,7 @@ def generate_vms():
     global dnsports
     global bootorders
     global ipmiserver
+    global bpname
     flavors = {}
     vms = {}
     networks = {}
@@ -457,7 +458,7 @@ def generate_vms():
                 rules.append({"name": "%s%s%s" % (
                     service["name"], subnet["net"], "udp"), "proto": "udp", "min": 1, "max": 65535, "remote_ip": netmask})
 
-            sgservice = SecurityGroup(vm["name"], rules)
+            sgservice = SecurityGroup(vm["name"], rules, bpname)
             stack_user += sgservice.generate_template(env)
         bootorder = None
         if "vmOrderGroupId" in vm:

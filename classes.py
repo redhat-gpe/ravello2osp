@@ -11,13 +11,14 @@ class Flavor:
     return tplflavor.render(name=self.name, cpu=self.cpu, memory=self.memory, disk=self.disk)
 
 class SecurityGroup:
-  def __init__(self, name, rules):
+  def __init__(self, name, rules, bpname):
     self.name = name
     self.rules = rules
+    self.bpname = bpname
   
   def generate_template(self,env):
     tplsgservice = env.get_template('sgservice.j2')
-    return tplsgservice.render(name=self.name, rules=self.rules)
+    return tplsgservice.render(name=self.name, rules=self.rules, bpname=self.bpname)
 
 class VM:
   def __init__(self, name, description, flavor, networks, rootdisk, userdata, cdrom, bpname, \
