@@ -225,6 +225,7 @@ def download_s3file(module, s3, bucket_name, object, dest):
     except Exception as e:
         module.fail_json(msg="Unable to complete multi-part download: {0}".format(e))
 
+
 def multi_part_upload(module, s3, bucket, item_name, file_path):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
