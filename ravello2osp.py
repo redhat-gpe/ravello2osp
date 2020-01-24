@@ -421,7 +421,7 @@ def generate_vms():
     global dnsports
     global bootorders
     global ipmiserver
-    flavors = []
+    flavors = {}
     vms = {}
     networks = {}
     trunks = {}
@@ -473,7 +473,7 @@ def generate_vms():
         root_disk_size = get_root_disk_size(vm)
         name_flavor = "CPU_%s_Memory_%s_Disk_%s" % (
             vm["numCpus"], memorymb, root_disk_size)
-        flavors.append(Flavor(vm["numCpus"], memorymb, root_disk_size))
+        flavors["%s_%s_%s" % (vm["numCpus"], memorymb, root_disk_size)] = Flavor(vm["numCpus"], memorymb, root_disk_size)
         hostname = None
         if "hostnames" in vm:
             hostname = vm["hostnames"][0]
@@ -589,7 +589,7 @@ def generate_vms():
                            }
 
     for flavor in flavors:
-        stack_admin += flavor.generate_template(env)
+        stack_admin += flavors[flavor].generate_template(env)
 
     depends_ip = ""
     for vm, data in networks.items():
