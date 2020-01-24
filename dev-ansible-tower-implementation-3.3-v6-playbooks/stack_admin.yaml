@@ -1,6 +1,9 @@
 heat_template_version: 2016-10-14
 description: Create a project
 parameters:
+  project_guid:
+    type: string
+    description: The GUID generated for the project
   project_name:
     type: string
     description: Name of the project
@@ -29,7 +32,6 @@ resources:
       password: { get_param: project_api_pass }
       domain: Default
 
-  
   openstack_project_role:
     type: OS::Keystone::UserRoleAssignment 
     properties: 
@@ -64,7 +66,6 @@ resources:
       volumes: 100
     depends_on:
       - openstack_project_nova_quota
-
   CPU_1_Memory_1024_Disk_10_flavor:
     type: OS::Nova::Flavor
     properties:
@@ -74,24 +75,15 @@ resources:
       is_public: True
       name: 
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
-  CPU_2_Memory_2048_Disk_10_flavor:
+  CPU_1_Memory_1024_Disk_10_flavor:
     type: OS::Nova::Flavor
     properties:
-      ram: "2048"
-      vcpus: "2"
+      ram: "1024"
+      vcpus: "1"
       disk: "10"
       is_public: True
       name: 
-         list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_2048_Disk_10"]]
-  CPU_2_Memory_4096_Disk_40_flavor:
-    type: OS::Nova::Flavor
-    properties:
-      ram: "4096"
-      vcpus: "2"
-      disk: "40"
-      is_public: True
-      name: 
-         list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_4096_Disk_40"]]
+         list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
   CPU_2_Memory_2048_Disk_10_flavor:
     type: OS::Nova::Flavor
     properties:
@@ -119,6 +111,15 @@ resources:
       is_public: True
       name: 
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
+  CPU_2_Memory_2048_Disk_10_flavor:
+    type: OS::Nova::Flavor
+    properties:
+      ram: "2048"
+      vcpus: "2"
+      disk: "10"
+      is_public: True
+      name: 
+         list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_2048_Disk_10"]]
   CPU_2_Memory_2048_Disk_50_flavor:
     type: OS::Nova::Flavor
     properties:
@@ -146,15 +147,15 @@ resources:
       is_public: True
       name: 
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
-  CPU_1_Memory_1024_Disk_10_flavor:
+  CPU_2_Memory_4096_Disk_40_flavor:
     type: OS::Nova::Flavor
     properties:
-      ram: "1024"
-      vcpus: "1"
-      disk: "10"
+      ram: "4096"
+      vcpus: "2"
+      disk: "40"
       is_public: True
       name: 
-         list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
+         list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_4096_Disk_40"]]
   CPU_1_Memory_2048_Disk_10_flavor:
     type: OS::Nova::Flavor
     properties:

@@ -7,7 +7,7 @@ parameters:
   project_name:
     type: string
     description: Name of the project for the flavors
-  guid: 
+  project_guid: 
     type: string
   api_user:
     type: string
@@ -23,26 +23,39 @@ parameters:
     description: OSP URL for API calls
  
 resources:
+  openstack_project_infra_key:
+    type: OS::Nova::KeyPair
+    properties:
+      name:
+        str_replace:
+          template: $project$-infra_key
+          params:
+             $project$: { get_param: project_guid }
+      save_private_key: true
   Network0_network:
     type: OS::Neutron::Net
     properties:
       name: "Network0"
       shared: false
+      value_specs: {"mtu": 1500}
   Network1_network:
     type: OS::Neutron::Net
     properties:
       name: "Network1"
       shared: false
+      value_specs: {"mtu": 1500}
   Network2_network:
     type: OS::Neutron::Net
     properties:
       name: "Network2"
       shared: false
+      value_specs: {"mtu": 1500}
   Network3_network:
     type: OS::Neutron::Net
     properties:
       name: "Network3"
       shared: false
+      value_specs: {"mtu": 1500}
   Network1_subnet:
     type: OS::Neutron::Subnet
     properties:
@@ -194,96 +207,17 @@ resources:
       
       - {port_range_max: 65535, port_range_min: 1, protocol: udp, remote_ip_prefix: 172.25.250.0/255.255.255.0}
       
-  3serverb-0_port:
+  3serverf-0_port:
     type: OS::Neutron::Port
     properties:
       network: { get_resource: Network0_network }
-      mac_address: "52:54:00:00:FA:0B"
+      mac_address: "52:54:00:00:FA:0F"
       
       port_security_enabled: false
       
       
       fixed_ips:
-        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.11"}
-      
-    
-  4utility-0_port:
-    type: OS::Neutron::Port
-    properties:
-      network: { get_resource: Network0_network }
-      mac_address: "52:54:00:00:FA:08"
-      
-      port_security_enabled: false
-      
-      
-      fixed_ips:
-        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.8"}
-      
-    
-  1tower-0_port:
-    type: OS::Neutron::Port
-    properties:
-      network: { get_resource: Network0_network }
-      mac_address: "52:54:00:00:FA:09"
-      
-      security_groups:
-        - 1tower_services_sg
-      
-      
-      fixed_ips:
-        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.9"}
-      
-    
-    depends_on:
-      
-      
-      - 1tower_services_sg
-      
-    
-  1tower-0_fip:
-    type: OS::Neutron::FloatingIP
-    depends_on:
-      - 1tower_server
-    properties:
-      floating_network_id: { get_param: public_net_id }
-      port_id: { get_resource: 1tower-0_port }
-  2workstation-0_port:
-    type: OS::Neutron::Port
-    properties:
-      network: { get_resource: Network0_network }
-      mac_address: "52:54:00:00:FA:FE"
-      
-      port_security_enabled: false
-      
-      
-      fixed_ips:
-        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.254"}
-      
-    
-  2workstation-1_port:
-    type: OS::Neutron::Port
-    properties:
-      network: { get_resource: Network3_network }
-      mac_address: "52:54:00:01:FC:01"
-      
-      port_security_enabled: false
-      
-      
-      fixed_ips:
-        - {subnet: {get_resource: Network3_subnet}, ip_address: "172.25.252.1"}
-      
-    
-  3serverc-0_port:
-    type: OS::Neutron::Port
-    properties:
-      network: { get_resource: Network0_network }
-      mac_address: "52:54:00:00:FA:0C"
-      
-      port_security_enabled: false
-      
-      
-      fixed_ips:
-        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.12"}
+        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.15"}
       
     
   3serverd-0_port:
@@ -299,43 +233,43 @@ resources:
         - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.13"}
       
     
-  4classroom-0_port:
-    type: OS::Neutron::Port
-    properties:
-      network: { get_resource: Network3_network }
-      mac_address: "52:54:00:00:00:fe"
-      
-      port_security_enabled: false
-      
-      
-      fixed_ips:
-        - {subnet: {get_resource: Network3_subnet}, ip_address: "172.25.252.254"}
-      
-    
-  4classroom-1_port:
-    type: OS::Neutron::Port
-    properties:
-      network: { get_resource: Network2_network }
-      mac_address: "2c:c2:60:2d:6b:f2"
-      
-      port_security_enabled: false
-      
-      
-      fixed_ips:
-        - {subnet: {get_resource: Network2_subnet}, ip_address: "10.1.1.11"}
-      
-    
-  3serverf-0_port:
+  3servere-0_port:
     type: OS::Neutron::Port
     properties:
       network: { get_resource: Network0_network }
-      mac_address: "52:54:00:00:FA:0F"
+      mac_address: "52:54:00:00:FA:0E"
       
       port_security_enabled: false
       
       
       fixed_ips:
-        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.15"}
+        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.14"}
+      
+    
+  3serverb-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Network0_network }
+      mac_address: "52:54:00:00:FA:0B"
+      
+      port_security_enabled: false
+      
+      
+      fixed_ips:
+        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.11"}
+      
+    
+  3serverc-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Network0_network }
+      mac_address: "52:54:00:00:FA:0C"
+      
+      port_security_enabled: false
+      
+      
+      fixed_ips:
+        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.12"}
       
     
   3servera-0_port:
@@ -349,19 +283,6 @@ resources:
       
       fixed_ips:
         - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.10"}
-      
-    
-  3servere-0_port:
-    type: OS::Neutron::Port
-    properties:
-      network: { get_resource: Network0_network }
-      mac_address: "52:54:00:00:FA:0E"
-      
-      port_security_enabled: false
-      
-      
-      fixed_ips:
-        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.14"}
       
     
   0bastion-0_port:
@@ -411,6 +332,98 @@ resources:
       - 0bastion_services_sg
       
     
+  4classroom-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Network3_network }
+      mac_address: "52:54:00:00:00:fe"
+      
+      port_security_enabled: false
+      
+      
+      fixed_ips:
+        - {subnet: {get_resource: Network3_subnet}, ip_address: "172.25.252.254"}
+      
+    
+  4classroom-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Network2_network }
+      mac_address: "2c:c2:60:2d:6b:f2"
+      
+      port_security_enabled: false
+      
+      
+      fixed_ips:
+        - {subnet: {get_resource: Network2_subnet}, ip_address: "10.1.1.11"}
+      
+    
+  2workstation-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Network0_network }
+      mac_address: "52:54:00:00:FA:FE"
+      
+      port_security_enabled: false
+      
+      
+      fixed_ips:
+        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.254"}
+      
+    
+  2workstation-1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Network3_network }
+      mac_address: "52:54:00:01:FC:01"
+      
+      port_security_enabled: false
+      
+      
+      fixed_ips:
+        - {subnet: {get_resource: Network3_subnet}, ip_address: "172.25.252.1"}
+      
+    
+  4utility-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Network0_network }
+      mac_address: "52:54:00:00:FA:08"
+      
+      port_security_enabled: false
+      
+      
+      fixed_ips:
+        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.8"}
+      
+    
+  1tower-0_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: Network0_network }
+      mac_address: "52:54:00:00:FA:09"
+      
+      security_groups:
+        - 1tower_services_sg
+      
+      
+      fixed_ips:
+        - {subnet: {get_resource: Network0_subnet}, ip_address: "172.25.250.9"}
+      
+    
+    depends_on:
+      
+      
+      - 1tower_services_sg
+      
+    
+  1tower-0_fip:
+    type: OS::Neutron::FloatingIP
+    depends_on:
+      - 1tower_server
+    properties:
+      floating_network_id: { get_param: public_net_id }
+      port_id: { get_resource: 1tower-0_port }
   0bastion_server:
     type: OS::Nova::Server
     properties:
@@ -422,12 +435,27 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_2048_Disk_10"]]
 
-
+      
+      key_name:  { get_resource: openstack_project_infra_key }
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "bastion-REPL"
+            params:
+              REPL: {get_param: project_guid}
+        
+        
+        "AnsibleGroup": bastions
+        "public_dns": true
+        
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -437,7 +465,7 @@ resources:
             hostname: bastion-REPL.rhpds.opentlc.com
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -460,12 +488,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_4096_Disk_40"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": "satclient:true"
+        
+        "hostname": 
+          str_replace:
+            template: "tower-REPL"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -475,7 +511,7 @@ resources:
             hostname: tower-REPL.rhpds.opentlc.com
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -496,12 +532,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_2048_Disk_10"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "workstation"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -511,7 +555,7 @@ resources:
             hostname: workstation
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -534,12 +578,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "servera"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -549,7 +601,7 @@ resources:
             hostname: servera
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -570,12 +622,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "serverb"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -585,7 +645,7 @@ resources:
             hostname: serverb
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -606,12 +666,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "serverc"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -621,7 +689,7 @@ resources:
             hostname: serverc
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -642,12 +710,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "serverd"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -657,7 +733,7 @@ resources:
             hostname: serverd
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -678,12 +754,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "servere"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -693,7 +777,7 @@ resources:
             hostname: servere
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -714,12 +798,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_1_Memory_1024_Disk_10"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "serverf"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -729,7 +821,7 @@ resources:
             hostname: serverf
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -750,12 +842,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_2048_Disk_50"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "instructor"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -765,7 +865,7 @@ resources:
             hostname: instructor
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -788,12 +888,20 @@ resources:
       flavor:
          list_join: ['-', [{ get_param: project_name }, "CPU_2_Memory_2048_Disk_10"]]
 
-
+      
       metadata: 
+        "guid": { get_param: project_guid }
         "description": ""
+        
+        "hostname": 
+          str_replace:
+            template: "utility"
+            params:
+              REPL: {get_param: project_guid}
+        
          
         
-      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": {get_file: "../99-custom-networking.cfg"}}
+      personality: {"/etc/cloud/cloud.cfg.d/99-custom-networking.cfg": "network: {config: disabled}\n"}
       user_data_format: RAW
       user_data:
         str_replace:
@@ -803,7 +911,7 @@ resources:
             hostname: utility
           
           params:
-            REPL: {get_param: guid}
+            REPL: {get_param: project_guid}
             
       networks:
         
@@ -813,3 +921,19 @@ resources:
     
 
   
+
+outputs:
+  openstack_project_infra_key:
+    description: The SSH infra key
+    value: {get_attr: [openstack_project_infra_key, private_key]}
+
+  0bastion-0_fip:
+    description: FIP for 0bastion-0
+    value: {get_attr: [0bastion-0_fip, floating_ip_address ]} 
+
+
+  1tower-0_fip:
+    description: FIP for 1tower-0
+    value: {get_attr: [1tower-0_fip, floating_ip_address ]} 
+
+

@@ -1,30 +1,65 @@
 - hosts: all
   gather_facts: False
   vars:
-    project_name: "dev-ansible-tower-implementation-3.3-v6"
+    project_name: "OPTLC-OSP13_Advanced_Storage-v0.7-bp"
+    ibm_api_key: "RkyfUgdoH3hFxsuT3H4-m-K3ZgKD995AyTkSsOWkd28y"
+    ibm_bucket_name: "gpte-novello-images"
+    ibm_endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
+    ibm_auth_endpoint: "https://iam.cloud.ibm.com/identity/token"
+    ibm_resource_id: "https://iam.cloud.ibm.com/identity/token"
     images:
       
-      - ['image', 'vda', '0bastion-vol1', '10']  
+      - ['volume', 'vda', '0wokstation-REPOS', '47']  
       
-      - ['image', 'vdb', '1tower-vda', '40']  
+      - ['image', 'vdb', '0wokstation-root', '10']  
       
-      - ['image', 'vdc', '2workstation-vda', '10']  
+      - ['volume', 'vdc', '1storage-nfs', '60']  
       
-      - ['image', 'vdd', '3servera-vda', '10']  
+      - ['image', 'vdd', '1storage-root', '10']  
       
-      - ['image', 'vde', '3serverb-vda', '10']  
+      - ['image', 'vde', '3ceph-node01-vol', '10']  
       
-      - ['image', 'vdf', '3serverc-vda', '10']  
+      - ['volume', 'vdf', '3ceph-node01-vol0', '10']  
       
-      - ['image', 'vdg', '3serverd-vda', '10']  
+      - ['volume', 'vdg', '3ceph-node01-vol1', '10']  
       
-      - ['image', 'vdh', '3servere-vda', '10']  
+      - ['volume', 'vdh', '3ceph-node01-vol2', '10']  
       
-      - ['image', 'vdi', '3serverf-vda', '10']  
+      - ['volume', 'vdi', '3ceph-node01-vol3', '10']  
       
-      - ['image', 'vdj', '4classroom-vda', '50']  
+      - ['image', 'vdj', '3ceph-node02-vol', '10']  
       
-      - ['image', 'vdk', '4utility-vda', '10']  
+      - ['volume', 'vdk', '3ceph-node02-vol0', '10']  
+      
+      - ['volume', 'vdl', '3ceph-node02-vol1', '10']  
+      
+      - ['volume', 'vdm', '3ceph-node02-vol2', '10']  
+      
+      - ['volume', 'vdn', '3ceph-node02-vol3', '10']  
+      
+      - ['image', 'vdo', '3ceph-node03-vol', '10']  
+      
+      - ['volume', 'vdp', '3ceph-node03-vol0', '10']  
+      
+      - ['volume', 'vdq', '3ceph-node03-vol1', '10']  
+      
+      - ['volume', 'vdr', '3ceph-node03-vol2', '10']  
+      
+      - ['volume', 'vds', '3ceph-node03-vol3', '10']  
+      
+      - ['image', 'vdt', '3ceph-node10-vol', '10']  
+      
+      - ['volume', 'vdu', '3ceph-node10-vol0', '10']  
+      
+      - ['volume', 'vdv', '3ceph-node10-vol1', '10']  
+      
+      - ['volume', 'vdw', '3ceph-node10-vol2', '10']  
+      
+      - ['volume', 'vdx', '3ceph-node10-vol3', '10']  
+      
+      - ['image', 'vdy', '4ceph-mon01-vol', '10']  
+      
+      - ['image', 'vdz', '4ceph-mon02-vol', '10']  
       
 
   tasks:
@@ -32,37 +67,42 @@
       file:
         path: /root/images/
         state: absent
+
     - name: Create in the VM the directory /root/images
       file:
         path: /root/images/
         state: directory
+
     - name: Install qemu-img
-      yum: name=qemu-img state=present
+      yum:
+        name: qemu-img
+        state: present
 
-    - name: Convert the disks attached to raw
-      command: qemu-img convert -O raw -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
-      loop:  "{{ images }}"
+    - name: Install ibm-cos-sdk using pip
+      pip:
+        name: ibm-cos-sdk
 
-    - name: Upload the images to OSP
-      os_image:
-        auth: 
-         auth_url: http://169.47.188.15:5000
-         project_name: admin
-         username: admin
-         password: T4g9fYEfwCuDCwgybCmGq6cxg
-         user_domain_name: Default
-         project_domain_name: Default
-        name: "{{ project_name }}-{{ item[2] }}"
-        container_format: bare
-        disk_format: raw
-        is_public: True
-        filename: "/root/images/{{ item[2] }}"
-      loop:  "{{ images }}"
+    - name: Upload images to IBM Cloud Storage
+      when: ibm_api_key != "" and ibm_bucket_name != ""
+      block:
+        - name: Convert the disks attached to qcow2
+          command: qemu-img convert -O qcow2 -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
+          loop:  "{{ images }}"
+
+        - name: Upload file to bucket
+          ibm_cos:
+            ibm_endpoint: "{{ ibm_endpoint }}"
+            ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
+            ibm_api_key: "{{ ibm_api_key }}"
+            ibm_resource_id: "{{ ibm_resource_id }}"
+            mode: put
+            bucket: "{{ ibm_bucket_name }}"
+            object: "/{{ project_name }}/{{ item[2] }}.qcow2"
+            src: "/root/images/{{ item[2] }}"
+          loop: "{{ images }}"
 
     - name: Shutdown the VM
       command: shutdown -h now
       ignore_errors: true
       tags:
       - shutdown
-
-
