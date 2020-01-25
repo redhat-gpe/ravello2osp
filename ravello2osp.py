@@ -599,7 +599,7 @@ def generate_vms():
             if vmnetwork["ip_address"]:
                 depends_ip = "%s-%d" % (vm, vmnetwork["index"])
                 port = Port(vmnetwork["index"], vmnetwork["mac"], vm, vmnetwork["network"], \
-                    vmnetwork["ip_address"], None, vmnetwork["services"])
+                    vmnetwork["ip_address"], None, vmnetwork["services"], bpname)
                 stack_user += port.generate_template(env)
             if vmnetwork["public"]:
                 fip = FIP(vmnetwork["index"], vmnetwork["network"], vm)
@@ -611,7 +611,7 @@ def generate_vms():
         for vmnetwork in data:
             if not vmnetwork["ip_address"]:
                 port = Port(vmnetwork["index"], vmnetwork["mac"], vm, vmnetwork["network"], \
-                    vmnetwork["ip_address"], depends_ip, vmnetwork["services"])
+                    vmnetwork["ip_address"], depends_ip, vmnetwork["services"], bpname)
                 stack_user += port.generate_template(env)
 
     for vm, data in trunks.items():

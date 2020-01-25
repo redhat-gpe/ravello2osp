@@ -89,7 +89,7 @@ class Subnet:
 
 
 class Port:
-  def __init__(self, index , mac, vm, network, ip_address, depends, services):
+  def __init__(self, index , mac, vm, network, ip_address, depends, services, bpname):
     self.name = "%s-%d" % (vm, index)
     self.mac = mac
     self.vm = vm
@@ -97,11 +97,12 @@ class Port:
     self.ip_address = ip_address
     self.depends = depends
     self.services = services
+    self.bpname = bpname
 
   def generate_template(self,env):
     tplport = env.get_template('port.j2')
     return tplport.render(name=self.name, mac=self.mac, vm=self.vm, network=self.network, \
-        ip_address=self.ip_address, depends=self.depends, services=self.services) 
+        ip_address=self.ip_address, depends=self.depends, services=self.services, bpname=self.bpname)
 
 class Trunk:
   def __init__(self, name, index, mac, network, subports):
