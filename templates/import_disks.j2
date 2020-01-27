@@ -16,17 +16,20 @@
       {% for disk in images %}
       - ['{{ disk.type }}', '{{ disk.device }}', '{{ disk.name }}', '{{ disk.size }}']  
       {% endfor %}
+     output_dir: "/images/import/{{ project_name }}"
 {% raw %}
   tasks:
     - name: Remove from the VM the directory /images
       file:
-        path: /images/import
+        path: "{{ output_dir }}"
         state: absent
+      ignore_error: true
 
     - name: Create in the VM the directory /images
       file:
-        path: /images/import
+        path: ""{{ output_dir }}""
         state: directory
+        recurse: true
 
     - name: Install qemu-img
       yum:
@@ -45,7 +48,6 @@
         name: openstacksdk
         version: 0.24.0
         state: present
-
 
     - name: Download images to IBM Cloud Storage
       when: ibm_api_key != "" and ibm_bucket_name != ""
