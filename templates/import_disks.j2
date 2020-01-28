@@ -16,40 +16,39 @@
       {% for disk in images %}
       - ['{{ disk.type }}', '{{ disk.device }}', '{{ disk.name }}', '{{ disk.size }}']  
       {% endfor %}
-     output_dir: "/images/import/{{ project_name }}"
+    output_dir: "/images/import/{{ project_name }}"
 {% raw %}
   tasks:
-    - name: Remove from the VM the directory /images
+    - name: Remove from the VM the directory {{ output_dir}}
       file:
         path: "{{ output_dir }}"
         state: absent
-      ignore_error: true
 
-    - name: Create in the VM the directory /images
+    - name: Create in the VM the directory {{ output_dir}}
       file:
-        path: ""{{ output_dir }}""
+        path: "{{ output_dir }}"
         state: directory
         recurse: true
 
-    - name: Install qemu-img
-      yum:
-        name: qemu-img
-        state: present
+#    - name: Install qemu-img
+#      yum:
+#        name: qemu-img
+#        state: present
 
-    - name: Install ibm-cos-sdk using pip
-      pip:
-        name: ibm-cos-sdk
-        state: present
+#    - name: Install ibm-cos-sdk using pip
+#      pip:
+#        name: ibm-cos-sdk
+#        state: present
 
-    #  subscription-manager repos --enable rhel-7-server-openstack-14-rpms
-    # yum install python2-openstacksdk.noarch
-    - name: Install openstacksdk using pip
-      pip:
-        name: openstacksdk
-        version: 0.24.0
-        state: present
+#    #  subscription-manager repos --enable rhel-7-server-openstack-14-rpms
+#    # yum install python2-openstacksdk.noarch
+#    - name: Install openstacksdk using pip
+#      pip:
+#        name: openstacksdk
+#        version: 0.24.0
+#        state: present
 
-    - name: Download images to IBM Cloud Storage
+    - name: Download images from IBM Cloud Storage
       when: ibm_api_key != "" and ibm_bucket_name != ""
       block:
         - name: Download images from IBM bucket
@@ -61,12 +60,16 @@
             mode: get
             bucket: "{{ ibm_bucket_name }}"
             object: "{{ project_name }}/{{ item[2] }}.qcow2"
-            dest: "/images/import/{{ item[2] }}.qcow2"
+            dest: "{{ output_dir }}/{{ item[2] }}.qcow2"
           loop: "{{ images }}"
+          loop_control:
+            label: "{{project_name}}/{{ item[2] }}"
 
         - name: Convert the disks attached to raw
-          command: qemu-img convert -O raw -p "/images/import/{{ item[2] }}.qcow2" "/images/import/{{ item[2] }}.raw"
+          command: qemu-img convert -O raw -p "{{ output_dir }}/{{ item[2] }}.qcow2" "{{ output_dir }}/{{ item[2] }}.raw"
           loop:  "{{ images }}"
+          loop_control:
+            label: "{{project_name}}/{{ item[2] }}"
 
         - name: Upload image to Glance
           os_image:
@@ -81,10 +84,12 @@
             container_format: bare
             disk_format: raw
             is_public: True
-            filename: "/images/import/{{ item[2] }}.raw"
+            filename: "{{ output_dir }}/{{ item[2] }}.raw"
             properties:
               blueprint: "{{ project_name }}"
           loop:  "{{ images }}"
+          loop_control:
+            label: "{{project_name}}/{{ item[2] }}"
 
     - name: Shutdown the VM
       command: shutdown -h now

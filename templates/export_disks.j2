@@ -11,16 +11,18 @@
       {% for disk in images %}
       - ['{{ disk.type }}', '{{ disk.device }}', '{{ disk.name }}', '{{ disk.size }}']  
       {% endfor %}
+    output_dir: "/root/images/{{ project_name }}"
 {% raw %}
   tasks:
-    - name: Remove from the VM the directory /root/images
+    - name: Remove from the VM the directory {{ output_dir}}
       file:
-        path: /root/images/
+        path: "{{ output_dir }}"
         state: absent
 
-    - name: Create in the VM the directory /root/images
+    - name: Create in the VM the directory {{ output_dir}}
       file:
-        path: /root/images/
+        path: "{{ output_dir }}"
+        recurse: true
         state: directory
 
     - name: Install qemu-img
@@ -33,12 +35,28 @@
         name: ibm-cos-sdk
         state: present
 
-    - name: Upload images to IBM Cloud Storage
+    - name: List bucket content
       when: ibm_api_key != "" and ibm_bucket_name != ""
       block:
+        - name: Get bucket content from IBM COS
+          ibm_cos:
+            ibm_endpoint: "{{ ibm_endpoint }}"
+            ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
+            ibm_api_key: "{{ ibm_api_key }}"
+            ibm_resource_id: "{{ ibm_resource_id }}"
+            mode: list
+            bucket: "{{ ibm_bucket_name }}"
+          register: bucket_content
+
+        - set_fact:
+            content: "{{ bucket_content.s3_keys }}"
+
         - name: Convert the disks attached to qcow2
-          command: qemu-img convert -O qcow2 -p /dev/{{ item[1] }} "/root/images/{{ item[2] }}"
+          command: qemu-img convert -O qcow2 -p /dev/{{ item[1] }} "{{ output_dir }}/{{ item[2] }}"
           loop:  "{{ images }}"
+          loop_control:
+            label: "{{project_name}}/{{ item[2] }}"
+          when: "{{ project_name+'/'+item[2]+'.qcow2' not in content }}"
 
         - name: Upload file to bucket
           ibm_cos:
@@ -49,8 +67,11 @@
             mode: put
             bucket: "{{ ibm_bucket_name }}"
             object: "{{ project_name }}/{{ item[2] }}.qcow2"
-            src: "/root/images/{{ item[2] }}"
+            src: "{{ output_dir }}/{{ item[2] }}"
           loop: "{{ images }}"
+          loop_control:
+            label: "{{project_name}}/{{ item[2] }}"
+          when: "{{ project_name+'/'+item[2]+'.qcow2' not in content }}"
 
     - name: Shutdown the VM
       command: shutdown -h now
