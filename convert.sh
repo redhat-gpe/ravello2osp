@@ -29,7 +29,7 @@ then
 fi
 
 outfile=/tmp/.convert.$$
-appName="exporter-app"
+appName="exporter-app-${ravelloUser}-$$"
 
 if [ -n "$pubKeyFile" ]
 then
@@ -39,6 +39,8 @@ else
   echo "Using password auth"
   pk=""
 fi
+
+echo "Deploying Ravello app: $appName"
 
 python create_ravello_disks_project.py -n $appName -u $ravelloUser -p $ravelloPass $pk > $outfile
 

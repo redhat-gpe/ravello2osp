@@ -5,7 +5,7 @@
       mac_address: "{{ mac }}"
       {% if services %}
       security_groups:
-        - {{ vm }}_services_sg
+        - {{bpname}}_{{ vm }}_services_sg
       {% else %}
       port_security_enabled: false
       {% endif %}
