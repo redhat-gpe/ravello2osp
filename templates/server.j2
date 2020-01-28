@@ -57,7 +57,7 @@
             {% endif %}
       networks:
         {% for nic in nics %}
-        - port: { get_resource: {{name}}-{{loop.index-1}}_port}
+        - port: { get_resource: {{name}}-{{nic.index}}_port}
         {% endfor %}
       {% if volumes %}
       block_device_mapping_v2:
