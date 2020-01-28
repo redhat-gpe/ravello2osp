@@ -1,3 +1,4 @@
 *-playbooks
 creds.inc
 *.pyc
+novello-templates
