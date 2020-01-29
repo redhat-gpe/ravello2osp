@@ -23,6 +23,7 @@ except ImportError:
 
 
 options = argparse.ArgumentParser()
+options.add_argument("-n", "--nodesc", required=False, help="Skip VM Descriptions", action='store_true')
 options.add_argument("-o", "--output", required=False, help="Output directory")
 options.add_argument("-e", "--emptyvolumes", required=False,
                      help="True=Create Empty Volumes", action='store_true')
@@ -66,6 +67,9 @@ enabledns = args["enabledns"]
 ipmiserver = args["ipmiserver"]
 
 json_file = args["jsonf"]
+
+nodesc = args["nodesc"]
+
 if args["output"]:
     output_dir = os.path.realpath(args["output"])
 else:
@@ -560,6 +564,7 @@ def generate_vms():
 
         vmdesc = ""
         if "description" in vm:
+          if not nodesc:
             vmdesc = vm["description"]
         vmuserdata = ""
 
@@ -643,6 +648,8 @@ def generate_vms():
         for hostname in data["hostnames"].split(":"):
             if "REPL" in hostname:
                 publicdnsnames.append(hostname)
+        if nodesc:
+          data["description"] = ""
         vm = VM(vm, data["description"], data["flavor"], networks[vm], rootdisk, \
             data["userdata"], data["cdrom"], bpname, data["volumes"], primaryhostname, \
             bootorder, waitfor, bootordermode=bootordermode, is_public=data["is_public"], \

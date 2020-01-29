@@ -20,12 +20,21 @@ outputdir="imported/${blueprint}-playbooks"
 
 mkdir -p $outputdir
 
-python ravello2osp.py  --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass
+python ravello2osp.py --nodesc --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass
 
 if [ $? -ne 0 ]
 then
   echo "ravello2osp.py failed."
   exit 1
+fi
+
+if [ -n "$2" ]
+then
+  if [ $2 == "metaonly" ]
+  then
+    echo "Meta files stored in $outputdir.  Not converting disk."
+    exit
+  fi
 fi
 
 outfile=/tmp/.convert.$$
