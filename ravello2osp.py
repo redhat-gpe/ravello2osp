@@ -482,6 +482,10 @@ def generate_vms():
         hostname = None
         if "hostnames" in vm:
             hostname = vm["hostnames"][0]
+            for hn in vm["hostnames"]:
+              if "REPL" in hn:
+                hostname = hn
+                break
         else:
             hostname = vm["name"]
         if debug:
@@ -647,6 +651,7 @@ def generate_vms():
         primaryhostname = data["hostnames"].split(":")[0].split(".")[0]
         for hostname in data["hostnames"].split(":"):
             if "REPL" in hostname:
+                primaryhostname = hostname
                 publicdnsnames.append(hostname)
         if nodesc:
           data["description"] = ""
@@ -655,7 +660,6 @@ def generate_vms():
             bootorder, waitfor, bootordermode=bootordermode, is_public=data["is_public"], \
             public_dns=publicdnsnames)
         stack_user += vm.generate_template(env, ipmiserver)
-
 
 
 generate_networks()
