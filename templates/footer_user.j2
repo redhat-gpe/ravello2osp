@@ -3,6 +3,13 @@ outputs:
   openstack_project_infra_key:
     description: The SSH infra key
     value: {get_attr: [openstack_project_infra_key, private_key]}
+
+{% if services %}
+  openstack_project_services:
+    description: Services for the app
+    value: "{{ services }}"
+{% endif %}
+
 {% for vm in fips %}
   {{ vm }}_fip:
     description: FIP for {{ vm }}

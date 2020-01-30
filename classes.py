@@ -20,6 +20,15 @@ class SecurityGroup:
     tplsgservice = env.get_template('sgservice.j2')
     return tplsgservice.render(name=self.name, rules=self.rules, bpname=self.bpname)
 
+  def generate_template_output(self,vm,env):
+    services = []
+    for rule in self.rules:
+        if str(rule["min"]) == str(rule["max"]):
+            services.append(rule["min"])
+        else:
+            services.append(str(rule["min"]) + " to " + str(rule["max"]))
+    return {vm: services}
+
 class VM:
   def __init__(self, name, description, flavor, networks, rootdisk, userdata, cdrom, bpname, \
     volumes, hostname, bootorder, waitfor, bootordermode, is_public, public_dns):
