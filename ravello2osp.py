@@ -651,7 +651,7 @@ def generate_vms():
         primaryhostname = data["hostnames"].split(":")[0].split(".")[0]
         for hostname in data["hostnames"].split(":"):
             if "REPL" in hostname:
-                primaryhostname = hostname
+                primaryhostname = hostname.split(".")[0]
                 publicdnsnames.append(hostname)
         if nodesc:
           data["description"] = ""
