@@ -89,6 +89,7 @@ if args["bootorder"]:
         print("Valid boot orders: signal or depends")
         sys.exit(-1)
 bootordermode = args["bootorder"]
+sg_outputs = {}
         
 
 if not os.path.exists(output_dir):
@@ -426,6 +427,8 @@ def generate_vms():
     global bootorders
     global ipmiserver
     global bpname
+    global sg_outputs
+
     flavors = {}
     vms = {}
     networks = {}
@@ -455,6 +458,10 @@ def generate_vms():
                 else:
                     rules.append({"name": service["name"], "proto": protocol,
                                   "remote_ip": "0.0.0.0/0"})
+            sgservice = SecurityGroup(vm["name"], rules, bpname)
+            sg_outputs.update(sgservice.generate_template_output(\
+              vm["hostnames"][0].split(".")[0] + ".DOMAIN", env))
+
             for subnet in network_config["subnets"]:
                 netmask = subnet["net"] + "/" + subnet["mask"]
                 rules.append({"name": "%s%s%s" % (
@@ -463,6 +470,7 @@ def generate_vms():
                     service["name"], subnet["net"], "udp"), "proto": "udp", "min": 1, "max": 65535, "remote_ip": netmask})
 
             sgservice = SecurityGroup(vm["name"], rules, bpname)
+
             stack_user += sgservice.generate_template(env)
         bootorder = None
         if "vmOrderGroupId" in vm:
@@ -670,7 +678,8 @@ if enabledns:
     generate_dns()
 
 footer_user = env.get_template('footer_user.j2')
-stack_user += footer_user.render(fips=fips)
+stack_user += footer_user.render(fips=fips, services=sg_outputs)
+
 
 print("INFO: Generated %s" % (output_dir + "/stack_admin.yaml"))
 fp = open(output_dir + "/stack_admin.yaml", "w")
