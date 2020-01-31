@@ -14,11 +14,6 @@
     output_dir: "/root/images/{{ project_name }}"
 {% raw %}
   tasks:
-    - name: Remove from the VM the directory {{ output_dir}}
-      file:
-        path: "{{ output_dir }}"
-        state: absent
-
     - name: Create in the VM the directory {{ output_dir}}
       file:
         path: "{{ output_dir }}"
@@ -72,6 +67,11 @@
           loop_control:
             label: "{{project_name}}/{{ item[2] }}"
           when: "{{ project_name+'/'+item[2]+'.qcow2' not in content }}"
+
+    - name: Remove from the VM the directory {{ output_dir}}
+      file:
+        path: "{{ output_dir }}"
+        state: absent
 
     - name: Shutdown the VM
       command: shutdown -h now

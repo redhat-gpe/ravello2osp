@@ -19,10 +19,6 @@
     output_dir: "/images/import/{{ project_name }}"
 {% raw %}
   tasks:
-    - name: Remove from the VM the directory {{ output_dir}}
-      file:
-        path: "{{ output_dir }}"
-        state: absent
 
     - name: Create in the VM the directory {{ output_dir}}
       file:
@@ -91,6 +87,11 @@
           loop_control:
             label: "{{project_name}}/{{ item[2] }}"
 
+    - name: Remove from the VM the directory {{ output_dir }}
+      file:
+        path: "{{ output_dir }}"
+        state: absent
+
     - name: Shutdown the VM
       command: shutdown -h now
       ignore_errors: true
@@ -113,7 +114,7 @@
       git:
         repo: "{{ heat_repository }}"
         dest: "{{ git_dir}}"
-        version: mamorim
+        version: master
         force: true
 
     - name: Create {{ template_dir }} directory
