@@ -20,7 +20,7 @@ outputdir="imported/${blueprint}-playbooks"
 
 mkdir -p $outputdir
 
-python ravello2osp.py --nodesc --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass
+python ravello2osp.py --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass
 
 if [ $? -ne 0 ]
 then
