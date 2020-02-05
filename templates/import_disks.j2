@@ -19,6 +19,10 @@
     output_dir: "/images/import/{{ project_name }}"
 {% raw %}
   tasks:
+    - name: Remove from the VM the directory /images/import
+      file:
+        path: "/images/import"
+        state: absent
 
     - name: Create in the VM the directory {{ output_dir}}
       file:
@@ -91,12 +95,6 @@
       file:
         path: "{{ output_dir }}"
         state: absent
-
-    - name: Shutdown the VM
-      command: shutdown -h now
-      ignore_errors: true
-      tags:
-      - shutdown
 {% endraw %}
 
 - hosts: localhost
