@@ -14,11 +14,10 @@
     output_dir: "/root/images/{{ project_name }}"
 {% raw %}
   tasks:
-    - name: Create in the VM the directory {{ output_dir}}
+    - name: Remove directory /root/images
       file:
-        path: "{{ output_dir }}"
-        recurse: true
-        state: directory
+        path: "/root/images"
+        state: absent
 
     - name: Install qemu-img
       yum:
@@ -33,49 +32,26 @@
     - name: List bucket content
       when: ibm_api_key != "" and ibm_bucket_name != ""
       block:
-        - name: Get bucket content from IBM COS
-          ibm_cos:
+        - name: Convert and upload images
+          convert_images:
             ibm_endpoint: "{{ ibm_endpoint }}"
             ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
             ibm_api_key: "{{ ibm_api_key }}"
             ibm_resource_id: "{{ ibm_resource_id }}"
-            mode: list
             bucket: "{{ ibm_bucket_name }}"
-          register: bucket_content
-
-        - set_fact:
-            content: "{{ bucket_content.s3_keys }}"
-
-        - name: Convert the disks attached to qcow2
-          command: qemu-img convert -O qcow2 -p /dev/{{ item[1] }} "{{ output_dir }}/{{ item[2] }}"
-          loop:  "{{ images }}"
-          loop_control:
-            label: "{{project_name}}/{{ item[2] }}"
-          when: "{{ project_name+'/'+item[2]+'.qcow2' not in content }}"
-
-        - name: Upload file to bucket
-          ibm_cos:
-            ibm_endpoint: "{{ ibm_endpoint }}"
-            ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
-            ibm_api_key: "{{ ibm_api_key }}"
-            ibm_resource_id: "{{ ibm_resource_id }}"
-            mode: put
-            bucket: "{{ ibm_bucket_name }}"
-            object: "{{ project_name }}/{{ item[2] }}.qcow2"
-            src: "{{ output_dir }}/{{ item[2] }}"
-          loop: "{{ images }}"
-          loop_control:
-            label: "{{project_name}}/{{ item[2] }}"
-          when: "{{ project_name+'/'+item[2]+'.qcow2' not in content }}"
+            blueprint: "{{ project_name }}"
+            output_dir: "{{ output_dir }}"
+            images: "{{ images }}"
+            overwrite: None
 
     - name: Remove from the VM the directory {{ output_dir}}
       file:
         path: "{{ output_dir }}"
         state: absent
 
-    - name: Shutdown the VM
-      command: shutdown -h now
-      ignore_errors: true
-      tags:
-      - shutdown
+#    - name: Shutdown the VM
+#      command: shutdown -h now
+#      ignore_errors: true
+#      tags:
+#      - shutdown
 {% endraw %}
