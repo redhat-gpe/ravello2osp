@@ -7,7 +7,7 @@ import os,sys
 import os.path
 from os import path
 debug = False
-bpname = "EXPORT-RAVELLO-DISKS-BP"
+bpname = "EXPORT-RAVELLO-DISKS-V3-BP"
 options = argparse.ArgumentParser()
 options.add_argument("-n", "--name", required=True, help="Name of the app")
 options.add_argument("-u", "--user", required=True, help="Ravello domain/username")
