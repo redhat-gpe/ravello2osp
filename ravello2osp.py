@@ -571,7 +571,10 @@ def generate_vms():
             # if bpdisk:
             #   client.delete_diskimage(bpdisk[0]["id"])
 
-        vmdesc = vm["description"].replace('\n', ' ')
+        if 'description' in vm:
+            vmdesc = vm["description"].replace('\n', ' ').replace('"', '')
+        else:
+            vmdesc = ''
         vmuserdata = ""
 
         if "userData" in vm:
