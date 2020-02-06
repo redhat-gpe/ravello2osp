@@ -1,5 +1,11 @@
 #!/bin/bash
 
+
+if [ -z "$ravelloDomain" ];
+then
+  ravelloDomain=None
+fi
+
 if [ ! -f creds.inc ]
 then
   echo "Please create creds.inc from creds.inc.example"
@@ -20,7 +26,7 @@ outputdir="imported/${blueprint}-playbooks"
 
 mkdir -p $outputdir
 
-python ravello2osp.py --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass
+python ravello2osp.py --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass --domain $ravelloDomain
 
 if [ $? -ne 0 ]
 then
@@ -51,7 +57,7 @@ fi
 
 echo "Deploying Ravello app: $appName"
 
-python create_ravello_disks_project.py -n $appName -u $ravelloUser -p $ravelloPass $pk > $outfile
+python create_ravello_disks_project.py -n $appName -u $ravelloUser -p $ravelloPass $pk  --domain $ravelloDomain > $outfile
 
 if [ $? -ne 0 ]
 then
@@ -69,7 +75,7 @@ python ravellodisks2glance.py --auth-url $ospAuthURL --auth-user $ospUser --auth
   -o $outputdir -bp $blueprint -u $ravelloUser -p $ravelloPass -a $appID -m $vmID --host $ravelloHost \
   --osp-project $ospProject --ibm-auth-endpoint $ibm_auth_endpoint --ibm-endpoint $ibm_endpoint \
   --ibm-api-key $ibm_api_key --ibm-bucket-name $ibm_bucket_name --ibm-resource-id "$ibm_resource_id" \
-  --importhost $import_host
+  --importhost $import_host --domain $ravelloDomain
 
 if [ $? -ne 0 ]
 then

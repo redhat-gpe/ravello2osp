@@ -24,34 +24,30 @@ except ImportError:
 
 options = argparse.ArgumentParser()
 options.add_argument("-o", "--output", required=False, help="Output directory")
-options.add_argument("-e", "--emptyvolumes", required=False,
-                     help="True=Create Empty Volumes", action='store_true')
+options.add_argument("-e", "--emptyvolumes", required=False, help="True=Create Empty Volumes", action='store_true')
+
 options_bp = options.add_argument_group()
-options_bp.add_argument("-bp", "--blueprint",
-                        required=False, help="Name of the blueprint")
-options_bp.add_argument("-u", "--user", required=False,
-                        help="Ravello domain/username")
-options_bp.add_argument(
-    "-p", "--password", required=False, help="Ravello password")
+
+options_bp.add_argument("-bp", "--blueprint", required=False, help="Name of the blueprint")
+options_bp.add_argument("-u", "--user", required=False, help="Ravello username")
+options_bp.add_argument("-p", "--password", required=False, help="Ravello password")
+options_bp.add_argument("--domain", required=False, help="Ravello domain identity", default=None)
+
 options_json = options.add_argument_group()
-options_json.add_argument("-j", "--jsonf", required=False,
-                          help="JSON file containing definition")
+
+options_json.add_argument("-j", "--jsonf", required=False, help="JSON file containing definition")
+
 options_dns = options.add_argument_group()
 
-options_dns.add_argument(
-    "-dns", "--enabledns", required=False, help="Enable DNS", action='store_true')
+options_dns.add_argument("-dns", "--enabledns", required=False, help="Enable DNS", action='store_true')
 
-options_dns.add_argument(
-    "--dns-ip", required=False, help="Specify manually an IP for DNS server\
-        instead auto-generated one")
+options_dns.add_argument("--dns-ip", required=False,
+                         help="Specify manually an IP for DNS server instead auto-generated one")
 
-options.add_argument(
-    "--bootorder", required=False, help="Enable boot order. Options: signal or depends")
+options.add_argument("--bootorder", required=False, help="Enable boot order. Options: signal or depends")
 
-options.add_argument(
-    "--ipmiserver", required=False, help="Specify the name of your IPMI VM")
-options.add_argument("-d", "--debug", required=False,
-                     help="Debug", action='store_true')
+options.add_argument("--ipmiserver", required=False, help="Specify the name of your IPMI VM")
+options.add_argument("-d", "--debug", required=False, help="Debug", action='store_true')
 
 args = vars(options.parse_args())
 
@@ -105,7 +101,12 @@ if args["blueprint"]:
         sys.exit(-1)
     bpname = args["blueprint"]
     client = RavelloClient()
-    client.login(args["user"], args["password"])
+    try:
+        domain = None if args["domain"] == "None" else args["domain"]
+        client.login(args["user"], args["password"], domain)
+    except Exception as e:
+        print("Error connecting to Ravello {0} - User: {1} - Domain {2}".format(e, args["user"], args["domain"]))
+        sys.exit(-1)
     bp = client.get_blueprints(filter={"name": bpname})[0]
     config = client.get_blueprint(bp["id"])
     fp = open(output_dir + "/blueprint.json", "w")

@@ -14,6 +14,7 @@ options.add_argument("-u", "--user", required=True,
                      help="Ravello domain/username")
 options.add_argument("-p", "--password", required=True,
                      help="Ravello password")
+options.add_argument("--domain", required=False, help="Ravello domain identity", default=None)
 options.add_argument("-a", "--application", required=True,
                      help="Ravello application")
 options.add_argument("-m", "--vm", required=True,
@@ -105,7 +106,13 @@ max_mount_count = 25 - (ord(start_conv_character) - ord('a'))
 
 bpname = args["blueprint"]
 client = RavelloClient()
-client.login(args["user"], args["password"])
+
+try:
+  domain = None if args["domain"] == "None" else args["domain"]
+  client.login(args["user"], args["password"], domain)
+except Exception as e:
+  print("Error connecting to Ravello {0} - User: {1} - Domain {2}".format(e, args["user"], args["domain"]))
+  sys.exit(-1)
 bp = client.get_blueprints(filter={"name": bpname})[0]
 config = client.get_blueprint(bp["id"])
 env = Environment(loader=file_loader)

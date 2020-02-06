@@ -1,6 +1,7 @@
 # Ravello username and password
 export ravelloUser='example@redhat.com'
 export ravelloPass='my*ravello!pass'
+export ravelloDomain=None
 
 # OpenStack username and password
 export ospUser='myospuser'
