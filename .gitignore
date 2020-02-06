@@ -2,3 +2,5 @@
 creds.inc
 *.pyc
 novello-templates
+imported
+temp
