@@ -135,6 +135,41 @@ def get_connection(module):
     return cos
 
 
+def multi_part_download(module, object, dest):
+    module.log(msg="Starting download %s to %s" % (object, dest))
+    if module.check_mode:
+        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
+
+    try:
+        s3 = get_connection(module)
+        bucket_name = module.params.get('bucket')
+        bucket = s3.Bucket(bucket_name)
+        obj = bucket.Object(object)
+
+        file_size = module.params.get('chunk_file_size')
+        threshold_file = module.params.get('threshold_file_size')
+
+        # set 5 MB chunks
+        part_size = 1024 * 1024 * file_size
+
+        # set threadhold to 15 MB
+        file_threshold = 1024 * 1024 * threshold_file
+
+        # set the transfer threshold and chunk size
+        transfer_config = ibm_boto3.s3.transfer.TransferConfig(
+            multipart_threshold=file_threshold,
+            multipart_chunksize=part_size
+        )
+
+        with open(dest, 'wb') as data:
+            obj.download_fileobj(Fileobj=data, Config=transfer_config)
+        module.log(msg="Transfer for {0} Complete!\n".format(dest))
+        return True
+    except Exception as e:
+        module.logn(msg="Unable to complete multi-part download: {0}".format(e))
+        return False
+
+
 def multi_part_upload(module, item_name, file_path):
     module.log(msg="Starting upload %s from %s" % (item_name, file_path))
     if module.check_mode:
@@ -243,6 +278,31 @@ def convert_to_qcow(module):
     module.exit_json(msg="Conversion successfully executed for {0}".format(blueprint))
 
 
+def convert_to_raw(module):
+    images = module.params.get('images')
+    output_dir = module.params.get('output_dir')
+    blueprint = module.params.get('blueprint')
+    overwrite = module.params.get('overwrite')
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    for img in images:
+        name = "%s" % img[2]
+        object_name = "%s/%s.qcow2" % (blueprint, name)
+        outfile = "%s/%s.qcow2" % (output_dir, name)
+        if not multi_part_download(module, object_name, outfile):
+            module.exit_json(msg="Error download images %s" % object_name)
+
+        cmd = "qemu-img convert -O raw -p %s %s/%s.raw" % (outfile, output_dir, name)
+        module.log("Running command %s" % cmd)
+
+        module.log("Stating conversion from qcow to raw for the image %s/%s.raw" % (output_dir, name))
+        rc, out, err = module.run_command(cmd)
+
+    module.exit_json(msg="Conversion successfully executed for {0}".format(blueprint))
+
+
 def run_module():
     module_args = dict(
         ibm_endpoint=dict(type='str',required=True),
@@ -252,6 +312,7 @@ def run_module():
         blueprint=dict(type='str', required=True),
         bucket=dict(required=True),
         images=dict(type='list', required=True),
+        mode=dict(choices=['upload', 'download'], default='upload'),
         output_dir=dict(default="/tmp/images/import"),
         overwrite=dict(aliases=['force'], default='always'),
         chunk_file_size=dict(default=5, type='int'),
@@ -270,7 +331,12 @@ def run_module():
     if module.check_mode:
         module.exit_json(msg="Operation skipped - running in check mode", changed=True)
 
-    convert_to_qcow(module)
+    mode = module.params.get("mode")
+    if mode == "upload":
+        convert_to_qcow(module)
+
+    if mode == "download":
+        convert_to_raw(module)
 
     module.exit_json(failed=False)
 

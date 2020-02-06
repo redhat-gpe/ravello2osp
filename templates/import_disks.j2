@@ -51,25 +51,18 @@
     - name: Download images from IBM Cloud Storage
       when: ibm_api_key != "" and ibm_bucket_name != ""
       block:
-        - name: Download images from IBM bucket
-          ibm_cos:
+        - name: Download and convert images
+          convert_images:
             ibm_endpoint: "{{ ibm_endpoint }}"
             ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
             ibm_api_key: "{{ ibm_api_key }}"
             ibm_resource_id: "{{ ibm_resource_id }}"
-            mode: get
             bucket: "{{ ibm_bucket_name }}"
-            object: "{{ project_name }}/{{ item[2] }}.qcow2"
-            dest: "{{ output_dir }}/{{ item[2] }}.qcow2"
-          loop: "{{ images }}"
-          loop_control:
-            label: "{{project_name}}/{{ item[2] }}"
-
-        - name: Convert the disks attached to raw
-          command: qemu-img convert -O raw -p "{{ output_dir }}/{{ item[2] }}.qcow2" "{{ output_dir }}/{{ item[2] }}.raw"
-          loop:  "{{ images }}"
-          loop_control:
-            label: "{{project_name}}/{{ item[2] }}"
+            blueprint: "{{ project_name }}"
+            output_dir: "{{ output_dir }}"
+            images: "{{ images }}"
+            mode: "download"
+            overwrite: None
 
         - name: Upload image to Glance
           os_image:

@@ -29,7 +29,7 @@
         name: ibm-cos-sdk
         state: present
 
-    - name: List bucket content
+    - name: Convert and upload images
       when: ibm_api_key != "" and ibm_bucket_name != ""
       block:
         - name: Convert and upload images
