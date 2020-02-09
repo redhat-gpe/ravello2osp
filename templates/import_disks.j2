@@ -19,16 +19,16 @@
     output_dir: "/images/import/{{ project_name }}"
 {% raw %}
   tasks:
-    - name: Remove from the VM the directory /images/import
-      file:
-        path: "/images/import"
-        state: absent
+#    - name: Remove from the VM the directory /images/import
+#      file:
+#        path: "/images/import"
+#        state: absent
 
-    - name: Create in the VM the directory {{ output_dir}}
-      file:
-        path: "{{ output_dir }}"
-        state: directory
-        recurse: true
+#    - name: Create in the VM the directory {{ output_dir}}
+#      file:
+#        path: "{{ output_dir }}"
+#        state: directory
+#        recurse: true
 
 #    - name: Install qemu-img
 #      yum:
@@ -53,6 +53,13 @@
       block:
         - name: Download and convert images
           convert_images:
+            auth:
+              auth_url: "{{ osp_auth_url }}"
+              project_name: "{{ osp_project }}"
+              username: "{{ osp_username }}"
+              password: "{{ osp_password }}"
+              user_domain_name: Default
+              project_domain_name: Default
             ibm_endpoint: "{{ ibm_endpoint }}"
             ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
             ibm_api_key: "{{ ibm_api_key }}"
@@ -63,26 +70,31 @@
             images: "{{ images }}"
             mode: "download"
             overwrite: None
+          register: output
+
+        - name: get images to upload to glance
+          set_fact:
+            images_upload: "{{ output.openstack_image }}"
 
         - name: Upload image to Glance
           os_image:
             auth:
-             auth_url: "{{ osp_auth_url }}"
-             project_name: "{{ osp_project }}"
-             username: "{{ osp_username }}"
-             password: "{{ osp_password }}"
-             user_domain_name: Default
-             project_domain_name: Default
-            name: "{{ project_name }}-{{ item[2] }}"
+              auth_url: "{{ osp_auth_url }}"
+              project_name: "{{ osp_project }}"
+              username: "{{ osp_username }}"
+              password: "{{ osp_password }}"
+              user_domain_name: Default
+              project_domain_name: Default
+            name: "{{ item.blueprint }}-{{ item.name }}"
             container_format: bare
             disk_format: raw
             is_public: True
-            filename: "{{ output_dir }}/{{ item[2] }}.raw"
+            filename: "{{ item.filename }}"
             properties:
               blueprint: "{{ project_name }}"
-          loop:  "{{ images }}"
+          loop:  "{{ images_upload }}"
           loop_control:
-            label: "{{project_name}}/{{ item[2] }}"
+            label: "{{ item.name }}"
 
     - name: Remove from the VM the directory {{ output_dir }}
       file:

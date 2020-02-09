@@ -109,6 +109,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 import ibm_boto3
 import os
 from ibm_botocore.client import Config, ClientError
@@ -166,8 +167,7 @@ def multi_part_download(module, object, dest):
         module.log(msg="Transfer for {0} Complete!\n".format(dest))
         return True
     except Exception as e:
-        module.logn(msg="Unable to complete multi-part download: {0}".format(e))
-        return False
+        module.exit_json(msg="Unable to complete multi-part download: {0}".format(e))
 
 
 def multi_part_upload(module, item_name, file_path):
@@ -210,6 +210,17 @@ def multi_part_upload(module, item_name, file_path):
     return True
 
 
+def glance_image_exists(module, image_name):
+    sdk, cloud = openstack_cloud_from_module(module)
+    try:
+        image = cloud.get_image(image_name)
+        # module.log("IMAGE Result: %s" % image)
+        return image
+
+    except sdk.exceptions.OpenStackCloudException as e:
+        module.fail_json(msg=str(e))
+
+
 def image_exits(module, image_name):
     endpoint = module.params['ibm_endpoint']
     api_key = module.params['ibm_api_key']
@@ -247,7 +258,7 @@ def convert_to_qcow(module):
         device = "/dev/{0}".format(img[1])
         name = "%s.qcow2" % img[2]
         outfile = "%s/%s" % (output_dir, name)
-        cmd = "qemu-img convert -O qcow2 -p %s %s" % (device, outfile)
+        cmd = "qemu-img convert -O qcow2 -p %s '%s'" % (device, outfile)
 
         item_name = "%s/%s" % (blueprint, name)
 
@@ -261,13 +272,13 @@ def convert_to_qcow(module):
             os.remove(outfile)
 
         try:
-            rc, out, err = module.run_command(cmd)
+            module.log("Converting command: %s" % cmd)
+            rc, out, err = module.run_command(cmd, check_rc=True)
         except Exception as e:
             module.log(msg="Unable to complete the conversion: {0}. Go to next disk".format(e))
-            continue
+            module.exit_json(msg="Error converting image %s" % name)
 
-        module.debug("DEBUG: rc: %s - out: %s - err: %s" % (rc, out, err))
-
+        module.log("DEBUG: rc: %s - out: %s - err: %s" % (rc, out, err))
         retries = module.params.get('retries')
         while retries > 0:
             if multi_part_upload(module, item_name, outfile):
@@ -283,24 +294,36 @@ def convert_to_raw(module):
     output_dir = module.params.get('output_dir')
     blueprint = module.params.get('blueprint')
     overwrite = module.params.get('overwrite')
-
+    image_to_upload = []
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     for img in images:
-        name = "%s" % img[2]
-        object_name = "%s/%s.qcow2" % (blueprint, name)
-        outfile = "%s/%s.qcow2" % (output_dir, name)
-        if not multi_part_download(module, object_name, outfile):
-            module.exit_json(msg="Error download images %s" % object_name)
+        disk_name = "%s" % img[2]
+        image_name = "%s-%s" % (blueprint, disk_name)
+        module.log("Check if image exists: %s" % image_name)
 
-        cmd = "qemu-img convert -O raw -p %s %s/%s.raw" % (outfile, output_dir, name)
-        module.log("Running command %s" % cmd)
+        check_image = glance_image_exists(module, image_name)
 
-        module.log("Stating conversion from qcow to raw for the image %s/%s.raw" % (output_dir, name))
-        rc, out, err = module.run_command(cmd)
+        if check_image is not None and overwrite != 'always':
+            module.log("Image %s already uploaded to glance. skipping..." % image_name)
+            continue
 
-    module.exit_json(msg="Conversion successfully executed for {0}".format(blueprint))
+        module.log("Image does not exists starting download: %s" % image_name)
+        object_name = "%s/%s.qcow2" % (blueprint, disk_name)
+        dest_disk = "%s/%s.qcow2" % (output_dir, disk_name)
+        raw_name = "%s/%s.raw" % (output_dir, disk_name.replace(" ", "-"))
+
+        image_to_upload.extend([{"name": image_name, "filename": raw_name, "blueprint": blueprint}])
+
+        if not multi_part_download(module, object_name, dest_disk):
+            module.exit_json(msg="Error download images %s to %s " % (object_name, dest_disk))
+
+        cmd = "qemu-img convert -O raw -p '%s' '%s/%s.raw'" % (dest_disk, output_dir, disk_name.replace(" ", "-"))
+        module.log("Stating conversion from qcow to raw for the image %s/%s.raw" % (output_dir,
+                                                                                    disk_name.replace(" ", "-")))
+        rc, out, err = module.run_command(cmd, check_rc=True)
+    module.exit_json(changed=False, openstack_image=image_to_upload)
 
 
 def run_module():
@@ -320,10 +343,12 @@ def run_module():
         retries=dict(default=5, type=int)
     )
 
-    module = AnsibleModule(
-        argument_spec=module_args,
-        supports_check_mode=True,
+    argument_spec = openstack_full_argument_spec(
+        image=dict(required=False),
     )
+    module_args.update(argument_spec)
+    module_kwargs = openstack_module_kwargs()
+    module = AnsibleModule(module_args, **module_kwargs)
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
