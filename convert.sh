@@ -44,7 +44,7 @@ then
 fi
 
 outfile=/tmp/.convert.$$
-appName="exporter-app-${ravelloUser}-$$"
+appName="exporter-app-${ravelloUser}"
 
 if [ -n "$pubKeyFile" ]
 then
