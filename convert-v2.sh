@@ -64,7 +64,10 @@ then
 fi
 
 export ANSIBLE_HOST_KEY_CHECKING=False
-cp -a library $outputdir
+CURRENT=$PWD
+cd  $outputdir
+ln -s ../../library
+cd $CURRENT
 ansible-playbook --skip-tags shutdown -i $outputdir/inventory $outputdir/class_playbook_export_disks.yaml -u root
 
 if [ $? -ne 0 ]
@@ -73,8 +76,6 @@ then
   #curl -s -X DELETE --user ${ravelloUser}:${ravelloPass} https://cloud.ravellosystems.com/api/v1/applications/${appID}
   exit 1
 fi
-
-ansible -i $outputdir/playbook_import_disks.hosts -m shell -a "shutdown -h now" export
 
 ansible-playbook --skip-tags shutdown -i $outputdir/inventory $outputdir/class_playbook_import_disks.yaml -u root
 

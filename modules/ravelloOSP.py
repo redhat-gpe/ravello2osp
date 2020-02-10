@@ -553,13 +553,13 @@ class RavelloOsp:
     def generate_footer(self):
         footer_user = self.env.get_template('footer_user.j2')
         self.stack_user += footer_user.render(fips=self.fips, services=self.sg_outputs)
-        print("INFO: Generated %s" % (self.output_dir + "/class_stack_user.yaml"))
-        fp = open(self.output_dir + "/class_stack_user.yaml", "w")
+        print("INFO: Generated %s" % (self.output_dir + "/stack_user.yaml"))
+        fp = open(self.output_dir + "/stack_user.yaml", "w")
         fp.write(self.stack_user)
         fp.close()
 
-        print("INFO: Generated %s" % (self.output_dir + "/class_stack_admin.yaml"))
-        fp = open(self.output_dir + "/class_stack_admin.yaml", "w")
+        print("INFO: Generated %s" % (self.output_dir + "/stack_admin.yaml"))
+        fp = open(self.output_dir + "/stack_admin.yaml", "w")
         fp.write(self.stack_admin)
         fp.close()
 
