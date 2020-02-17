@@ -5,14 +5,22 @@
   vars:
     heat_repository: git@github.com:redhat-gpe/novello-templates.git
     git_dir: "novello-templates"
-    template_dir: "{{ git_dir }}/heat-templates/{{ project_name }}"
-    output_dir: "imported/{{ project_name }}-playbooks"
+    template_dir: "{{ git_dir }}/heat-templates/{{ blueprint_name }}"
+    output_dir: "imported/{{ blueprint_name }}-playbooks"
+    env_vars:
+      outputdir: "{{ output_dir }}"
+      bluprint: "{{ blueprint_name }}"
   vars_prompt:
     - prompt: "Name of the BP"
-      name: project_name
+      name: blueprint_name
       private: no
 
   tasks:
+    - name: Update stack_user.yaml and  stack_admin.yaml
+      command: python ravello2osp.py --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass --domain $ravelloDomain
+      environment: "{{ env_vars }}"
+      register: update_stacks
+
     - name: Debug vars
       debug:
         msg: "Heat Repository: {{ heat_repository }} - Git Dir: {{ git_dir }} - Template dir {{ template_dir }} - output {{ output_dir }}"
@@ -43,10 +51,10 @@
       shell: cd "{{ git_dir }}" && git add .
       when: copy_templates is changed
 
-    - name: Commit heat templates for {{ project_name }}
+    - name: Commit heat templates for {{ blueprint_name }}
       environment:
         GPG_TTY: ""
-      shell: cd "{{ git_dir }}" && git commit -m 'Update heat {{ project_name }}'
+      shell: cd "{{ git_dir }}" && git commit -m 'Update heat {{ blueprint_name }}'
       when: copy_templates is changed
 
     - name: Pushing modifications
