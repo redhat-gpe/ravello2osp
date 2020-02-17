@@ -28,8 +28,8 @@ resources:
     properties:
       name:
         str_replace:
-          template: $project$-infra_key
+          template: KEY_NAME-infra_key
           params:
-             $project$: { get_param: project_guid }
+             KEY_NAME: { get_param: project_guid }
       save_private_key: true
 
