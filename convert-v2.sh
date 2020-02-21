@@ -18,7 +18,7 @@ blueprint=$1
 outputdir="imported/${blueprint}-playbooks"
 mkdir -p $outputdir
 
-appName="exporter-app-mamorim+gptelatam@redhat.com-15483"
+appName="exporter-app-mamorim+gptelatam@redhat.com"
 
 if [ -n "$pubKeyFile" ]
 then
@@ -77,14 +77,14 @@ then
   exit 1
 fi
 
-ansible-playbook --skip-tags shutdown -i $outputdir/inventory $outputdir/class_playbook_import_disks.yaml -u root
-
-if [ $? -ne 0 ]
-then
-  echo "ansible-playbook import failed."
-  #curl -s -X DELETE --user ${ravelloUser}:${ravelloPass} https://cloud.ravellosystems.com/api/v1/applications/${appID}
-  exit 1
-fi
+#ansible-playbook --skip-tags shutdown -i $outputdir/inventory $outputdir/class_playbook_import_disks.yaml -u root
+#
+#if [ $? -ne 0 ]
+#then
+#  echo "ansible-playbook import failed."
+#  #curl -s -X DELETE --user ${ravelloUser}:${ravelloPass} https://cloud.ravellosystems.com/api/v1/applications/${appID}
+#  exit 1
+#fi
 
 #curl -s -X DELETE --user ${ravelloUser}:${ravelloPass} https://cloud.ravellosystems.com/api/v1/applications/${appID}
 

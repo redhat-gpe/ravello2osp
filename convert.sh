@@ -28,6 +28,7 @@ mkdir -p $outputdir
 
 python ravello2osp.py --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass --domain $ravelloDomain
 
+
 if [ $? -ne 0 ]
 then
   echo "ravello2osp.py failed."
@@ -44,7 +45,7 @@ then
 fi
 
 outfile=/tmp/.convert.$$
-appName="exporter-app-${ravelloUser}"
+appName="exporter-app-mamorim+gptelatam@redhat.com"
 
 if [ -n "$pubKeyFile" ]
 then
@@ -58,6 +59,7 @@ fi
 echo "Deploying Ravello app: $appName"
 
 python create_ravello_disks_project.py -n $appName -u $ravelloUser -p $ravelloPass $pk  --domain $ravelloDomain > $outfile
+
 
 if [ $? -ne 0 ]
 then
@@ -107,14 +109,14 @@ then
   exit 1
 fi
 
-ansible-playbook --skip-tags shutdown -i $outputdir/playbook_import_disks.hosts $outputdir/playbook_import_disks.yaml -u root
+#ansible-playbook --skip-tags shutdown -i $outputdir/playbook_import_disks.hosts $outputdir/playbook_import_disks.yaml -u root
+#
+#if [ $? -ne 0 ]
+#then
+#  echo "ansible-playbook import failed."
+#  exit 1
+#fi
 
-if [ $? -ne 0 ]
-then
-  echo "ansible-playbook import failed."
-  exit 1
-fi
-
-curl -s -X DELETE --user ${ravelloUser}:${ravelloPass} https://cloud.ravellosystems.com/api/v1/applications/${appID}
+#curl -s -X DELETE --user ${ravelloUser}:${ravelloPass} https://cloud.ravellosystems.com/api/v1/applications/${appID}
 
 echo "The HEAT templates are in $outputdir/{stack_admin.yaml,stack_user.yaml}"
