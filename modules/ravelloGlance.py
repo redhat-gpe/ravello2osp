@@ -2,6 +2,7 @@ import time
 from jinja2 import Environment, FileSystemLoader
 import os
 import sys
+import json
 
 
 class RavelloGlance():
@@ -61,7 +62,10 @@ class RavelloGlance():
     def get_root_disk_name(self, vm):
         for disk in vm["hardDrives"]:
             if disk["boot"] and disk["type"] == "DISK":
-                return disk["name"]
+                if "name" in disk:
+                    return disk["name"]
+                else:
+                    return disk["baseDiskImageName"]
 
     def generate_disks(self):
         for vm in self.vms_config:
@@ -71,10 +75,15 @@ class RavelloGlance():
             for disk in sorted(vm["hardDrives"], key=lambda k: k["index"]):
                 voltype = "volume"
                 if disk["type"] == "DISK":
+                    print("Add disk %s" % json.dumps(disk, indent=2))
                     if self.debug:
                         print("Add disk %s" % (disk["name"]))
-                    if self.get_root_disk_name(vm) == disk["name"]:
-                        voltype = "image"
+                    if "name" in disk:
+                        if self.get_root_disk_name(vm) == disk["name"]:
+                            voltype = "image"
+                    else:
+                        if self.get_root_disk_name(vm) == disk["baseDiskImageName"]:
+                            voltype = "image"
                 else:
                     if self.debug:
                         # TODO
@@ -84,7 +93,10 @@ class RavelloGlance():
                 if len(self.disk_prefix) > 0:
                     diskimagename = '{}-{}'.format(self.disk_prefix, disk['baseDiskImageName'])
                 else:
-                    diskimagename = "{}-{}".format(vm["name"], disk["name"])
+                    if "name" in disk:
+                        diskimagename = "{}-{}".format(vm["name"], disk["name"])
+                    else:
+                        diskimagename = "{}-{}".format(vm["name"], disk["baseDiskImageName"].replace(".qcow", ""))
                 bpdisk = self.client.get_diskimages(filter={"name": diskimagename})
                 if bpdisk:
                     self.client.delete_diskimage(bpdisk[0]["id"])
@@ -123,7 +135,7 @@ class RavelloGlance():
 
         self.disks_created.sort(key=lambda e: e[2]['name'])
         for vmname, voltype, disk in self.disks_created[self.offset:self.offset + self.max_mount_count]:
-            print("Add disk to vm %s" % vmname)
+            print("Add disk %s to vm %s" % (disk["name"], vmname))
             self.vm["hardDrives"].append(
                 {"name": disk["name"], "baseDiskImageId": disk["id"], "baseDiskImageName": disk["name"],
                  "type": "DISK", "controllerIndex": i, "size": disk["size"], "controller": "VIRTIO"})
