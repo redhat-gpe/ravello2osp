@@ -18,7 +18,7 @@ blueprint=$1
 outputdir="imported/${blueprint}-playbooks"
 mkdir -p $outputdir
 
-appName="exporter-app-mamorim+gptelatam@redhat.com"
+appName="exporter-app-${ravelloUser}"
 
 if [ -n "$pubKeyFile" ]
 then
