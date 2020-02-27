@@ -32,8 +32,7 @@ def main():
     options_bp.add_argument("-u", "--user", required=False,
                             help="Ravello domain/username")
     options_bp.add_argument("-p", "--password", required=False, help="Ravello password")
-    options_bp.add_argument("-di", "--domain-id", required=False, help="Ravello domain identity", default=None,
-                            action="store_true")
+    options_bp.add_argument("-di", "--domain-id", required=False, help="Ravello domain identity", default=None)
 
     options_json = options.add_argument_group()
     options_json.add_argument("-j", "--jsonf", required=False,
