@@ -15,7 +15,8 @@ except ImportError:
 def ravello_login(args):
     try:
         client = RavelloClient()
-        client.login(args["user"], args["password"], args["domain_id"])
+        domain = None if args["domain_id"] == "None" else args["domain"]
+        client.login(args["user"], args["password"], domain)
         return client
     except Exception as e:
         print("Error connecting to Ravello: {0}".format(e))
