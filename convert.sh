@@ -29,23 +29,16 @@ else
   pk=""
 fi
 
-if [ -n "$ravelloDomain" ]
-then
-  domain="--domain-id $ravelloDomain"
-else
-  domain=""
-fi
-
 echo "Deploying Ravello app: $appName"
 
 python convert-blueprint.py  --blueprint $blueprint --output $outputdir --user $ravelloUser \
   --password $ravelloPass --name $appName $pk --importhost $import_host --auth-url $ospAuthURL \
   --auth-user $ospUser --auth-password $ospPass --ibm-endpoint $ibm_endpoint --ibm-api-key $ibm_api_key \
-  --ibm-bucket-name $ibm_bucket_name --ibm-resource-id $ibm_resource_id $domain
+  --ibm-bucket-name $ibm_bucket_name --ibm-resource-id $ibm_resource_id  --domain-id $ravelloDomain
 
 if [ $? -ne 0 ]
 then
-  echo "ravellodisks2glance.py failed."
+  echo "convert-blueprint.py failed."
   exit 1
 fi
 
@@ -66,6 +59,7 @@ fi
 export ANSIBLE_HOST_KEY_CHECKING=False
 CURRENT=$PWD
 cd  $outputdir
+rm -f library
 ln -s ../../library
 cd $CURRENT
 ansible-playbook --skip-tags shutdown -i $outputdir/inventory $outputdir/class_playbook_export_disks.yaml -u root
