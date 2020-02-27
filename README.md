@@ -54,3 +54,15 @@ The `convert.sh` or` convert-v2.sh` script must be used to perform the blueprint
 ```bash
 ./convert.sh <<blueprint_name>>
 ```
+
+## Known issues
+
+If you see this error message:
+```bash
+TASK [Wait 600 seconds for target connection to become reachable/usable] *******************************************************************************************************************************
+Wednesday 26 February 2020  11:20:18 -0500 (0:00:00.061)       0:00:00.061 **** 
+ [WARNING]: Unhandled error in Python interpreter discovery for host exporter-exporterappmamorim-hr28csvv.srv.ravcloud.com: Failed to connect to the host via ssh: ssh: connect to host exporter-
+exporterappmamorim-hr28csvv.srv.ravcloud.com port 22: Network is unreachable
+
+```
+Go to Ravello and restart your application, this issues happens because the application started using the wrong disk
