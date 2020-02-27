@@ -16,14 +16,13 @@
       private: no
 
   tasks:
-    - name: Update stack_user.yaml and  stack_admin.yaml
-      command: python ravello2osp.py --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass --domain $ravelloDomain
-      environment: "{{ env_vars }}"
+    - name: Update stack_user.yaml and stack_admin.yaml
+      command: "{{ playbook_dir }}/create_heat-files.sh {{ blueprint_name }}"
       register: update_stacks
 
     - name: Debug vars
       debug:
-        msg: "Heat Repository: {{ heat_repository }} - Git Dir: {{ git_dir }} - Template dir {{ template_dir }} - output {{ output_dir }}"
+        msg: "Blueprint: {{ blueprint_name }} - Heat Repository: {{ heat_repository }} - Git Dir: {{ git_dir }} - Template dir {{ template_dir }} - output {{ output_dir }}"
 
     - name: Clone heat-templates repository
       git:
