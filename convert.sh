@@ -29,9 +29,9 @@ else
   pk=""
 fi
 
-if [ -n "$domain_id" ]
+if [ -n "$ravelloDomain" ]
 then
-  domain="--domain-id $domain_id"
+  domain="--domain-id $ravelloDomain"
 else
   domain=""
 fi
