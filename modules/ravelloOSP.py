@@ -67,7 +67,7 @@ class RavelloOsp:
             self.blueprint = config["name"]
 
         self.network_config = self.config["design"]["network"]
-        self.vms_config = sorted(self.config["design"]["vms"])
+        self.vms_config = self.config["design"]["vms"]
 
     def generate_networks(self):
         i = 0
