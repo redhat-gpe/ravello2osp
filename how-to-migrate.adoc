@@ -1,0 +1,181 @@
+= Migrating blueprint from Ravello to IBM Cloud Storage
+
+As we know we are near close to EOL of Ravello environment and we have a lot data in that environment and we need to
+migrate all of those data to IBM Cloud Storage, think on that we created a simple solution to do everything what we
+need to upload all data from Ravello to IBM Cloud Storage
+
+IBM Cloud storage is a S3 solution provider by IBM and we have a bucket to be used to upload all images from Ravello to
+this storage, we also have another solution to download those images from IBM Cloud Storage and import on Novello
+environment, but this part is out of scope of this document
+
+
+== Requirements
+
+* Ravello User
+* IBM Credentials
+* Git Hub account and commit access to https://github.com/redhat-gpe/novello-templates[novello-templates]
+
+.IBM Credentials
+IMPORTANT: Request this information for Marcos Amorim <mamorim@redhat.com>,
+Patrick Rutledge <prutledge@redhat.com> or Josh Disraeli <jdisraeli@redhat.com>
+
+.Git Hub Account
+IMPORTANT: Send your GitHub account name to Patrick Rutledge <prutledge@redhat.com> to give your access to the
+https://github.com/redhat-gpe/novello-templates[novello-templates] repository and configure your account to allow commit
+and push using SSH
+
+
+== Prepare your environent
+
+
+=== Clone Ravelo2OSP Project
+
+[source, bash]
+----
+git clone https://github.com/redhat-gpe/ravello2osp
+----
+
+==== Install Python Modules
+
+[source, bash]
+----
+cd ravello2osp
+pip install -r requirements.txt --user
+----
+
+===== Add your ~/.local/bin to the PATH
+
+[source, bash]
+----
+export PATH=$PATH:/home/USER/.local/bin
+----
+
+NOTE: Replace USER by your username
+
+=== Credentials file
+
+[source, bash]
+----
+cp creds.inc.example creds.inc
+----
+
+==== Edit credentials
+
+Edit your `creds.inc` file and change the options below
+
+.Credentials parameters
+|===
+|Variable |Description
+
+|ravelloUser
+|Ravello username
+
+|ravelloPass
+|Ravello password
+
+|ravelloDomain
+|If your Ravello username requires the identity domain, set this value, any thing else, keep the value None
+
+|pubKeyFile
+|Comment this out if you want to use password authentication otherwise it will inject this password into the exporter VM in the root user
+
+|ibm_api_key
+|IBM API Key used to upload the images to IBM Cloud Storages. **request this information!**
+
+|ibm_bucket_name
+|IBM bucket name, set this value to gpte-novello-images
+
+|ibm_endpoint
+|IBM Cloud Storage endpoint, set to https://s3.us-east.cloud-object-storage.appdomain.cloud
+
+|ibm_auth_endpoint
+|IBM Cloud Storage auth endpoint, set to https://iam.cloud.ibm.com/identity/token
+
+|ibm_resource_id
+|IBM Cloud Storage resource id, **request this information!**
+
+|import_host
+|This variable set to the import server, set this value to 192.168.10.2, this value will not be used, but it will be necessary for some scripts.
+
+|===
+
+.Request this information
+IMPORTANT: Request this information for Marcos Amorim <mamorim@redhat.com>,
+Patrick Rutledge <prutledge@redhat.com> or Josh Disraeli <jdisraeli@redhat.com>
+
+
+== List of blueprints
+
+On this https://docs.google.com/spreadsheets/d/1VKFG4yfEgHiu7anBSv0btpBqwqVVO8jSg1AymQxs2ps/edit#gid=0[spreedsheet] we have
+a list of blueprint that we need to migrate from Ravello to IBM Cloud.
+
+Choose a blueprint in column O, and add a note "in progress" in column V, this is necessary to avoid converting the
+same blueprint by more than one person, when you finish the migration, change column V, to "OK - INITIAL"
+
+.INITIAL
+NOTE: First name and last name initials, eg: Marcos Amorim will be MA
+
+
+== Starting the migration
+
+After choosing a blueprint, it's time to start the conversion:
+
+In the `ravello2osp` directory run the following command
+
+[source, bash]
+----
+./convert.sh BLUEPRINT_NAME
+----
+
+.BLUEPRINT_NAME
+IMPORTANT: Replace BLUEPRINT_NAME by the name of blueprint that you choose on the spreadsheet
+
+.You need to *pay attention* to some outputs on the screen
+IMPORTANT: If you see an message like below:
+
+[source, bash]
+----
+
+Wait 10 seconds before add the disks to the VM
+WARNING: More than 25 disks in the blueprint, in total 30 disks.
+Only 25 disks are going to be attached.
+----
+
+After completing the conversion, you must execute another `convert-offset.sh` script passing as parameter the
+same blueprint name
+
+NOTE: The `convert.sh` script adds a maximum of 25 blueprint disks, if the blueprint has more than that, we have to run
+the other script to continue the conversion from disk 25 to disk 49
+
+
+== Known Issues
+
+Some errors are known, in case of error in the conversion, leave a comment in the spreadsheet, marking Marcos Amorim,
+Patrick Rutledge and Josh Disraeli with details of the error so that we can investigate.
+
+1. Wait 600 seconds for target connection
+
+If you see the message bellow, go to Ravello UI and restart your application
+[source, bash]
+----
+TASK [Wait 600 seconds for target connection to become reachable/usable] **************************************************************************************************
+Tuesday 25 February 2020  14:21:18 -0500 (0:00:00.099)       0:00:00.099 ******
+ [WARNING]: Unhandled error in Python interpreter discovery for host exporter-exporterappmamorim-z1cavid9.srv.ravcloud.com: Failed to connect to the host via ssh: ssh:
+connect to host exporter-exporterappmamorim-z1cavid9.srv.ravcloud.com port 22: Network is unreachable
+----
+
+
+== The process
+
+This how-to describes the steps required to migrate Ravello blueprints to IBM Cloud Storage, the process consists of
+running only one script with the parameter of the name of the blueprint you want to migrate.
+
+The migration process consists of a few steps, as follows:
+
+1. Create json file from the blueprint (`blueprint.json`) and save it to your machine
+2. Using information from Json, creates two heat files (`stack_user.yml` and `stack_admin.yml`)
+3. Install an application on Ravello, using your Ravello username and password
+4. Create playbook to convert the disk and upload to IBM Cloud Storage
+5. Attach the blueprint disks in this application
+6. Execute the playbook to convert and upload the disks images to IBM Cloud Storage
+7. Upload the `stack_user.yml`, `stack_admin.yaml` and `blueprint.json` to https://github.com/redhat-gpe/novello-templates[novello-templates]
