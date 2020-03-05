@@ -26,4 +26,4 @@ outputdir="imported/${blueprint}-playbooks"
 
 mkdir -p $outputdir
 
-python ravello2osp.py --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass --domain $ravelloDomain
+python3 ravello2osp.py --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass --domain $ravelloDomain
