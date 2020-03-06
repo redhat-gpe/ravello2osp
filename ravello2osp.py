@@ -399,6 +399,10 @@ def find_device_network(id):
         if "ports" in switch:
             for port in switch["ports"]:
                 if port["deviceId"] == id:
+                    for segment in port["networkSegmentReferences"]:
+                        if segment["egressPolicy"] == "UNTAGGED":
+                            return get_network_name_from_segment_id(segment["networkSegmentId"])
+                    # If all is tagged, return first one
                     return get_network_name_from_segment_id(port["networkSegmentReferences"][0]["networkSegmentId"])
 
 
