@@ -44,6 +44,7 @@
       loop:
         - "{{ output_dir }}/stack_admin.yaml"
         - "{{ output_dir }}/stack_user.yaml"
+        - "{{ output_dir }}/blueprint.json"
       register: copy_templates
 
     - name: Add heat templates to git
