@@ -262,6 +262,10 @@ class RavelloOsp:
             if "ports" in switch:
                 for port in switch["ports"]:
                     if port["deviceId"] == id:
+                        for segment in port["networkSegmentReferences"]:
+                            if segment["egressPolicy"] == "UNTAGGED":
+                                return self.get_network_name_from_segment_id(segment["networkSegmentId"])
+                        # If all is tagged, return first one
                         return self.get_network_name_from_segment_id(port["networkSegmentReferences"][0]["networkSegmentId"])
 
     def get_root_disk_name(self, vm):
@@ -301,8 +305,13 @@ class RavelloOsp:
                         rules.append({"name": service["name"], "proto": protocol,
                                       "remote_ip": "0.0.0.0/0"})
                 sgservice = SecurityGroup(vm["name"], rules, self.blueprint)
-                self.sg_outputs.update(sgservice.generate_template_output(
-                    vm["hostnames"][0].split(".")[0] + ".DOMAIN", self.env))
+                hostname = None
+                if "hostnames" in vm:
+                    hostname = vm["hostnames"][0]
+                    for hn in vm["hostnames"]:
+                        if "REPL" in hn:
+                            hostname = hn
+                self.sg_outputs.update(sgservice.generate_template_output(hostname.split(".")[0] + ".DOMAIN", self.env))
 
                 for subnet in self.network_config["subnets"]:
                     netmask = subnet["net"] + "/" + subnet["mask"]

@@ -75,7 +75,6 @@ class RavelloGlance():
             for disk in sorted(vm["hardDrives"], key=lambda k: k["index"]):
                 voltype = "volume"
                 if disk["type"] == "DISK":
-                    print("Add disk %s" % json.dumps(disk, indent=2))
                     if self.debug:
                         print("Add disk %s" % (disk["name"]))
                     if "name" in disk:
