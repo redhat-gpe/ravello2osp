@@ -461,8 +461,14 @@ def generate_vms():
                     rules.append({"name": service["name"], "proto": protocol,
                                   "remote_ip": "0.0.0.0/0"})
             sgservice = SecurityGroup(vm["name"], rules, bpname)
+            hostname = None
+            if "hostnames" in vm:
+                hostname = vm["hostnames"][0]
+                for hn in vm["hostnames"]:
+                  if "REPL" in hn:
+                    hostname = hn
             sg_outputs.update(sgservice.generate_template_output(\
-              vm["hostnames"][0].split(".")[0] + ".DOMAIN", env))
+              hostname.split(".")[0] + ".DOMAIN", env))
 
             for subnet in network_config["subnets"]:
                 netmask = subnet["net"] + "/" + subnet["mask"]
