@@ -53,6 +53,7 @@
           {% endif %}
           params:
             REPL: {get_param: project_guid}
+            DOMAIN: {get_param: dns_domain}
             {% if bootordermode == "signal" %}
             SIGNAL: {% if bootorder %}{ get_attr: [{{name}}_wait_handle_string, value] }{%else%}sleep 0{%endif%}
             {% endif %}
