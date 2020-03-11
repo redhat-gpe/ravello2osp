@@ -588,7 +588,7 @@ def generate_vms():
         else:
             vmdesc = ''
         vmuserdata = ""
-
+        hostname = hostname.split(".")[0] + ".DOMAIN"
         if "userData" in vm:
             if "#cloud-config" in vm["userData"]:
                 vmuserdata = vm["userData"].replace(

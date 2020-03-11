@@ -27,6 +27,7 @@
             template: "{{ hostname }}"
             params:
               REPL: {get_param: project_guid}
+              DOMAIN: {get_param: dns_domain}
         {% if is_public %}
         {% if "opentlc.com" in public_dns %}
         "AnsibleGroup": bastions
