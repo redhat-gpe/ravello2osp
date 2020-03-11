@@ -108,7 +108,7 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 import ibm_boto3
 import os
@@ -262,7 +262,7 @@ def convert_to_qcow(module):
 
         item_name = "%s/%s" % (blueprint, name)
 
-        if image_exits(module, item_name) and overwrite != 'always':
+        if image_exits(module, item_name) and not overwrite:
             module.log("Image {0} already uploaded to IBM. Continue ".format(item_name))
             continue
 
@@ -285,6 +285,75 @@ def convert_to_qcow(module):
                 module.log(msg="Successfully uploaded {0}".format(name))
                 break
             retries = retries - 1
+
+    module.exit_json(msg="Conversion successfully executed for {0}".format(blueprint))
+
+
+def check_snapshot_ceph(module, img_id):
+    glance_pool = module.params.get("glance_pool")
+
+    cmd = 'rbd snap list {0}/{1}'.format(glance_pool, img_id)
+    rc, out, err = module.run_command(cmd)
+    module.log("CHECK SNAP: %s - rc: %s - out: %s - %s" % (cmd, rc, out, err))
+
+    if len(out) == 0:
+        return True
+    else:
+        return False
+
+
+def convert_from_ceph(module, direct_url, image_name):
+    ceph_cluster_id = direct_url[2]
+    ceph_pool = direct_url[3]
+    ceph_image_id = direct_url[4]
+    output_dir = module.params.get("output_dir")
+    project = module.params.get("project")
+    overwrite = boolean(module.params.get("overwrite"))
+    object_name = "%s/%s.qcow2" % (project, image_name)
+    file_path = "%s/%s.qcow2" % (output_dir, image_name)
+
+    module.log(
+        "Ceph Cluster ID: {0} - Ceph Pool: {1} - Image ID: {2} - Image Name: {3}".format(ceph_cluster_id, ceph_pool, ceph_image_id, image_name))
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    if not check_snapshot_ceph(module, ceph_image_id):
+        if image_exits(module, object_name) is not None and not overwrite:
+            module.log("Image {0} already exists. Overwrite: {1}".format(object_name, overwrite))
+            return True
+
+        cmd = "qemu-img convert -O qcow2 -f raw 'rbd:{0}/{1}@snap' '{2}' ".format(ceph_pool, ceph_image_id, file_path)
+        module.log(cmd)
+        module.run_command(cmd, check_rc=True)
+        if multi_part_upload(module, object_name, file_path):
+            os.remove(file_path)
+
+
+def update_image(module):
+    blueprint = module.params.get('project')
+    images = module.params.get("images")
+    for image in images:
+        image_facts = glance_image_exists(module, image)
+        if image_facts is None:
+            module.log("Images {} not exists".format(image))
+            continue
+
+        image_name = image_facts['name']
+        if blueprint in image_facts['name']:
+            image_name = image_facts['name'][len(blueprint)+1:]
+
+        module.log("Image Facts: %s" % image_facts)
+        if not 'direct_url' in image_facts:
+            module.log("Directl URL does not exists in the images")
+            continue
+
+        direct_url = image_facts['direct_url'].split('/')
+        module.log("DEBUG direct_url: {}".format(direct_url))
+        if not direct_url[0] == "rbd:":
+            module.log("The image {} is not RBD image to convert".format(image))
+
+        convert_from_ceph(module, direct_url, image_name)
 
     module.exit_json(msg="Conversion successfully executed for {0}".format(blueprint))
 
@@ -328,16 +397,17 @@ def convert_to_raw(module):
 
 def run_module():
     module_args = dict(
-        ibm_endpoint=dict(type='str',required=True),
-        ibm_api_key=dict(type='str',required=True),
+        ibm_endpoint=dict(type='str', required=True),
+        ibm_api_key=dict(type='str', required=True, no_log=True),
         ibm_auth_endpoint=dict(type='str', default='https://iam.cloud.ibm.com/identity/token'),
-        ibm_resource_id=dict(type='str',required=True),
-        blueprint=dict(type='str', required=True),
+        ibm_resource_id=dict(type='str', required=True),
+        project=dict(aliases=['blueprint'], type='str', required=True),
         bucket=dict(required=True),
-        images=dict(type='list', required=True),
-        mode=dict(choices=['upload', 'download'], default='upload'),
-        output_dir=dict(default="/tmp/images/import"),
-        overwrite=dict(aliases=['force'], default='always'),
+        mode=dict(choices=['upload', 'download', 'update'], default='upload'),
+        output_dir=dict(default="/images/import"),
+        glance_pool=dict(required=False),
+        images=dict(type=list),
+        overwrite=dict(aliases=['force'], default=False, type=bool),
         chunk_file_size=dict(default=5, type='int'),
         threshold_file_size=dict(default=15, type='int'),
         retries=dict(default=5, type=int)
@@ -362,6 +432,9 @@ def run_module():
 
     if mode == "download":
         convert_to_raw(module)
+
+    if mode == "update":
+        update_image(module)
 
     module.exit_json(failed=False)
 
