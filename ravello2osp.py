@@ -5,6 +5,7 @@
 
 from jinja2 import Environment, FileSystemLoader
 from netaddr import IPNetwork, IPAddress
+import ipaddress
 import argparse
 import base64
 import json
@@ -471,7 +472,7 @@ def generate_vms():
               hostname.split(".")[0] + ".DOMAIN", env))
 
             for subnet in network_config["subnets"]:
-                netmask = subnet["net"] + "/" + subnet["mask"]
+                netmask = str(ipaddress.ip_network(subnet["net"] + "/" + subnet["mask"], False))
                 rules.append({"name": "%s%s%s" % (
                     service["name"], subnet["net"], "tcp"), "proto": "tcp", "min": 1, "max": 65535, "remote_ip": netmask})
                 rules.append({"name": "%s%s%s" % (
