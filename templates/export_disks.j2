@@ -1,7 +1,7 @@
 - hosts: export
   gather_facts: False
   vars:
-    project_name: "{{ project_name }}"
+    project: "{{ project_name }}"
     ibm_api_key: "{{ ibm_api_key }}"
     ibm_bucket_name: "{{ ibm_bucket_name }}"
     ibm_endpoint: "{{ ibm_endpoint }}"
@@ -55,10 +55,11 @@
             ibm_api_key: "{{ ibm_api_key }}"
             ibm_resource_id: "{{ ibm_resource_id }}"
             bucket: "{{ ibm_bucket_name }}"
-            blueprint: "{{ project_name }}"
+            blueprint: "{{ project }}"
             output_dir: "{{ output_dir }}"
+            mode: "upload"
             images: "{{ images }}"
-            overwrite: None
+            overwrite: "{{ overwrite_image | default('false') }}"
 
     - name: Remove from the VM the directory {{ output_dir}}
       file:
@@ -95,6 +96,7 @@
         path: "{{ template_dir }}"
         state: directory
         recurse: true
+      register: create_dir
 
     - name: Copy heat-templates to {{ template_dir }}
       copy:
@@ -104,6 +106,7 @@
         - stack_admin.yaml
         - stack_user.yaml
       register: copy_templates
+      when: create_dir.changed
 
     - name: Add heat templates to git
       shell: cd "{{ git_dir }}" && git add .
