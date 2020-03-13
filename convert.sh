@@ -19,7 +19,7 @@ blueprint=$1
 option=""
 if [ -n "$2" ]
 then
-  option=$2
+  option="$2"
 fi
 
 outputdir="imported/${blueprint}-playbooks"
@@ -39,7 +39,7 @@ fi
 echo "Deploying Ravello app: $appName"
 
 heat=""
-if [ $option == "heatonly" ]
+if [ "$option" == "heatonly" ]
 then
   heat="--heatonly"
 fi
@@ -55,7 +55,7 @@ then
   exit 1
 fi
 
-if [ $option == "heatonly" ]
+if [ "$option" == "heatonly" ]
 then
   ansible-playbook -i $outputdir/inventory playbook_update_heat_templates.yml -u root -e blueprint_name=$blueprint
   exit
