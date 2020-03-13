@@ -15,6 +15,13 @@ then
 fi
 
 blueprint=$1
+
+option=""
+if [ -n "$2" ]
+then
+  option=$2
+fi
+
 outputdir="imported/${blueprint}-playbooks"
 mkdir -p $outputdir
 
@@ -31,15 +38,27 @@ fi
 
 echo "Deploying Ravello app: $appName"
 
+heat=""
+if [ $option == "heatonly" ]
+then
+  heat="--heatonly"
+fi
+
 python3 convert-blueprint.py  --blueprint $blueprint --output $outputdir --user $ravelloUser \
   --password $ravelloPass --name $appName $pk --importhost $import_host --auth-url $ospAuthURL \
   --auth-user $ospUser --auth-password $ospPass --ibm-endpoint $ibm_endpoint --ibm-api-key $ibm_api_key \
-  --ibm-bucket-name $ibm_bucket_name --ibm-resource-id $ibm_resource_id  --domain-id $ravelloDomain
+  --ibm-bucket-name $ibm_bucket_name --ibm-resource-id $ibm_resource_id  --domain-id $ravelloDomain $heat
 
 if [ $? -ne 0 ]
 then
   echo "convert-blueprint.py failed."
   exit 1
+fi
+
+if [ $option == "heatonly" ]
+then
+  ansible-playbook -i $outputdir/inventory playbook_update_heat_templates.yml -u root -e blueprint_name=$blueprint
+  exit
 fi
 
 echo "Waiting for SSH service to start on VM."
