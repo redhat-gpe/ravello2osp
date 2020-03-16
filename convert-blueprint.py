@@ -89,6 +89,7 @@ def main():
 
     options.add_argument("-sv", "--single-vm", required=False, default=None,
                          help="Specify with VM name to only setup a single VM's disks.")
+    options.add_argument("--heatonly", required=False, help="Heat Only", default=False, action='store_true')
 
     args = vars(options.parse_args())
     client = ravello_login(args)
@@ -96,6 +97,9 @@ def main():
     # Create heat templates
     convert_bp = ravelloOSP.RavelloOsp(args, client)
     convert_bp.generate_all()
+
+    if args["heatonly"]:
+      exit()
 
     # Create application
     project = ravelloProject.ravelloProject(args, client)
