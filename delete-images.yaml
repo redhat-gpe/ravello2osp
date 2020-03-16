@@ -1,0 +1,33 @@
+- name: Step 001 Migrating blueprints
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tags:
+  - step001
+  - pre_infrastructure
+  - osp_migration
+  vars_prompt:
+    - prompt: "Name of the BP"
+      name: project
+      private: no
+  vars:
+    ibm_api_key: "{{ lookup('env', 'ibm_api_key') }}"
+    ibm_bucket_name: "gpte-novello-images"
+    ibm_endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
+    ibm_auth_endpoint: "https://iam.cloud.ibm.com/identity/token"
+    ibm_resource_id: "{{ lookup('env', 'ibm_resource_id') }}"
+    output_dir: "/tmp/{{ project }}"
+  tasks:
+    - name: Delete images from project
+      convert_images:
+        ibm_endpoint: "{{ ibm_endpoint }}"
+        ibm_auth_endpoint: "{{ ibm_auth_endpoint }}"
+        ibm_api_key: "{{ ibm_api_key }}"
+        ibm_resource_id: "{{ ibm_resource_id }}"
+        bucket: "{{ ibm_bucket_name }}"
+        project: "{{ project }}"
+        output_dir: "{{ output_dir }}"
+        mode: "delete"
+        glance_pool: "{{ ceph_cluster |default('red') }}-images"
+        overwrite: "{{ overwrite_image | default('false') }}"
+

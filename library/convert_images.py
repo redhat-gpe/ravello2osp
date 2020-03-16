@@ -221,7 +221,7 @@ def glance_image_exists(module, image_name):
         module.fail_json(msg=str(e))
 
 
-def image_exits(module, image_name):
+def image_exits(module, image_name, content=False):
     endpoint = module.params['ibm_endpoint']
     api_key = module.params['ibm_api_key']
     auth_endpoint = module.params['ibm_auth_endpoint']
@@ -239,7 +239,10 @@ def image_exits(module, image_name):
     try:
         response = cos.list_objects_v2(Bucket=bucket, Prefix=image_name)
         if 'Contents' in response:
-            return True
+            if content:
+                return response['Contents']
+            else:
+                return True
     except Exception as e:
         module.log(msg="Error get bucket content. {0}".format(e))
         return False
@@ -330,6 +333,23 @@ def convert_from_ceph(module, direct_url, image_name):
             os.remove(file_path)
 
 
+def delete_image(module):
+    blueprint = module.params.get('project')
+    bucket_name = module.params.get('bucket')
+    image_list = image_exits(module, blueprint, True)
+    cos = get_connection(module)
+    if image_list is None:
+        module.exit_json(msg="Image does not exists", changed=False)
+    for img in image_list:
+        try:
+            cos.Object(bucket_name, img['Key']).delete()
+            module.log("Image {} deleted".format(img['Key']))
+        except ClientError as be:
+            module.exit_json(msg="CLIENT ERROR: {0}\n".format(be))
+        except Exception as e:
+            module.exit_json(msg="Unable to delete item: {0}".format(e))
+
+
 def update_image(module):
     blueprint = module.params.get('project')
     images = module.params.get("images")
@@ -403,7 +423,7 @@ def run_module():
         ibm_resource_id=dict(type='str', required=True),
         project=dict(aliases=['blueprint'], type='str', required=True),
         bucket=dict(required=True),
-        mode=dict(choices=['upload', 'download', 'update'], default='upload'),
+        mode=dict(choices=['upload', 'download', 'update', 'delete'], default='upload'),
         output_dir=dict(default="/images/import"),
         glance_pool=dict(required=False),
         images=dict(type=list),
@@ -435,6 +455,9 @@ def run_module():
 
     if mode == "update":
         update_image(module)
+
+    if mode == "delete":
+        delete_image(module)
 
     module.exit_json(failed=False)
 
