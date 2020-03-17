@@ -387,11 +387,27 @@ def get_root_disk_size(vm):
                 print("The unexpected unit is: {}".format(size_unit))
                 sys.exit(-1)
             return size
-
+    # If there is not bootable disk, just return first one
+    for disk in vm["hardDrives"]:
+        if disk["index"] == 0  and disk["type"] == "DISK":
+            size = disk["size"]["value"]
+            size_unit = disk["size"]["unit"]
+            try:
+                size = unit_conversion_map[size_unit](size)
+            except KeyError:
+                print("Blueprint returned an unexpected size unit. Please create an issue on GitHub.")
+                print("The unexpected unit is: {}".format(size_unit))
+                sys.exit(-1)
+            return size
+ 
 
 def get_root_disk_name(vm):
     for disk in vm["hardDrives"]:
         if disk["boot"] and disk["type"] == "DISK":
+            return disk["name"]
+    # If there is not bootable disk, just return first one
+    for disk in vm["hardDrives"]:
+        if disk["index"] == 0 and disk["type"] == "DISK":
             return disk["name"]
 
 
