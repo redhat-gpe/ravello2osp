@@ -18,7 +18,7 @@ blueprint=$1
 outputdir="imported/${blueprint}-playbooks"
 mkdir -p $outputdir
 
-appName="exporter-app-${ravelloUser}"
+appName="exporter-app-${ravelloUser}-$$"
 
 if [ -n "$pubKeyFile" ]
 then
@@ -79,6 +79,7 @@ fi
 #  exit 1
 #fi
 
-#curl -s -X DELETE --user ${ravelloUser}:${ravelloPass} https://cloud.ravellosystems.com/api/v1/applications/${appID}
+echo "Deleting $appName from Ravello"
+python3 delete-app.py --user $ravelloUser   --password $ravelloPass --domain-id $ravelloDomain -a ${appName}
 
 echo "The HEAT templates are in $outputdir/{stack_admin.yaml,stack_user.yaml}"
