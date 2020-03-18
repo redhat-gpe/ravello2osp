@@ -388,7 +388,8 @@ class RavelloOsp:
                             assign_public = True
                     else:
                         ip_address = ""
-                    network["device"]["mac"] = network["device"]["generatedMac"]
+                    if "mac" not in network["device"]:
+                        network["device"]["mac"] = network["device"]["generatedMac"]
                     if self.debug:
                         print("Create network device with mac %s on network %s with ip %s"
                               % (network["device"]["mac"], self.find_device_network(network["id"]), ip_address))
