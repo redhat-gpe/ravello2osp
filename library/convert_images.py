@@ -339,7 +339,7 @@ def delete_image(module):
     image_list = image_exits(module, blueprint, True)
     cos = get_connection(module)
     if image_list is None:
-        module.exit_json(msg="Image does not exists", changed=False)
+        module.exit_json(msg="Image does not exists")
     for img in image_list:
         try:
             cos.Object(bucket_name, img['Key']).delete()
