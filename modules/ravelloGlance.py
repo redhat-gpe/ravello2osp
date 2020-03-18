@@ -152,7 +152,7 @@ class RavelloGlance():
 
     def generate_template(self):
         tplexportdisks = self.env.get_template('export_disks.j2')
-        export_disks = tplexportdisks.render(images=self.import_images, project_name=self.bpname,
+        export_disks = tplexportdisks.render(images=self.import_images, project_name=self.bpname.replace(":","_"),
                                              ibm_api_key=self.ibm_api_key, ibm_bucket_name=self.ibm_bucket_name,
                                              ibm_endpoint=self.ibm_endpoint, ibm_auth_endpoint=self.ibm_auth_endpoint,
                                              ibm_resource_id=self.ibm_resource_id
@@ -164,7 +164,7 @@ class RavelloGlance():
         fp.close()
 
         tplimportdisks = self.env.get_template('import_disks.j2')
-        import_disks = tplimportdisks.render(images=self.import_images, project_name=self.bpname,
+        import_disks = tplimportdisks.render(images=self.import_images, project_name=self.bpname.replace(":","_"),
                                              osp_auth_url=self.auth_url, osp_username=self.auth_user,
                                              osp_password=self.auth_password, osp_project=self.osp_project,
                                              ibm_api_key=self.ibm_api_key, ibm_bucket_name=self.ibm_bucket_name,

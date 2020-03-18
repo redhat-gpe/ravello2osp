@@ -64,7 +64,7 @@ class RavelloOsp:
             fp.close()
         else:
             config = json.loads(open(self.json_file, "r").read())
-            self.blueprint = config["name"]
+            self.blueprint = config["name"].replace(":","_")
 
         self.network_config = self.config["design"]["network"]
         self.vms_config = self.config["design"]["vms"]
@@ -248,6 +248,19 @@ class RavelloOsp:
                     print("The unexpected unit is: {}".format(size_unit))
                     sys.exit(-1)
                 return size
+        # If there is not bootable disk, just return first one
+        for disk in vm["hardDrives"]:
+            if disk["index"] == 0  and disk["type"] == "DISK":
+                size = disk["size"]["value"]
+                size_unit = disk["size"]["unit"]
+                try:
+                    size = self.unit_conversion_map[size_unit](size)
+                except KeyError:
+                    print("Blueprint returned an unexpected size unit. Please create an issue on GitHub.")
+                    print("The unexpected unit is: {}".format(size_unit))
+                    sys.exit(-1)
+                return size
+     
 
     def get_port_ip_address(self, id):
         if "dhcpServers" in self.network_config["services"]:
@@ -272,6 +285,11 @@ class RavelloOsp:
         for disk in vm["hardDrives"]:
             if disk["boot"] and disk["type"] == "DISK":
                 return disk["name"]
+        # If there is not bootable disk, just return first one
+        for disk in vm["hardDrives"]:
+            if disk["index"] == 0 and disk["type"] == "DISK":
+                return disk["name"]
+
 
     def generate_vms(self):
         flavors = {}
@@ -370,8 +388,7 @@ class RavelloOsp:
                             assign_public = True
                     else:
                         ip_address = ""
-                    if "mac" not in network["device"]:
-                        network["device"]["mac"] = network["device"]["generatedMac"]
+                    network["device"]["mac"] = network["device"]["generatedMac"]
                     if self.debug:
                         print("Create network device with mac %s on network %s with ip %s"
                               % (network["device"]["mac"], self.find_device_network(network["id"]), ip_address))

@@ -100,7 +100,7 @@ if args["blueprint"]:
     if not ravello_sdk_enabled:
         print("Python module ravello_sdk is not installed in your environment.")
         sys.exit(-1)
-    bpname = args["blueprint"]
+    bpname = args["blueprint"].replace(":","_")
     client = RavelloClient()
     try:
         domain = None if args["domain"] == "None" else args["domain"]
@@ -539,8 +539,7 @@ def generate_vms():
                         assign_public = True
                 else:
                     ip_address = ""
-                if "mac" not in network["device"]:
-                    network["device"]["mac"] = network["device"]["generatedMac"]
+                network["device"]["mac"] = network["device"]["generatedMac"]
                 if debug:
                     print("Create network device with mac %s on network %s with ip %s"
                           % (network["device"]["mac"], find_device_network(network["id"]), ip_address))
