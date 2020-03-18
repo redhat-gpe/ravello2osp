@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 if [ -z "$ravelloDomain" ];
 then
   ravelloDomain=None
@@ -21,9 +20,13 @@ then
 fi
 
 blueprint=$1
+appName="exporter-app-${ravelloUser}-$$"
 
 outputdir="imported/${blueprint}-playbooks"
 
 mkdir -p $outputdir
 
-python3 ravello2osp.py --blueprint $blueprint --output $outputdir --user $ravelloUser --password $ravelloPass --domain $ravelloDomain
+python3 convert-blueprint.py  --blueprint $blueprint --output $outputdir --user $ravelloUser \
+  --password $ravelloPass --name $appName $pk --importhost $import_host --auth-url $ospAuthURL \
+  --auth-user $ospUser --auth-password $ospPass --ibm-endpoint $ibm_endpoint --ibm-api-key $ibm_api_key \
+  --ibm-bucket-name $ibm_bucket_name --ibm-resource-id $ibm_resource_id  --domain-id $ravelloDomain --heatonly
