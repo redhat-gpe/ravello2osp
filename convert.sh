@@ -52,6 +52,7 @@ python3 convert-blueprint.py  --blueprint $blueprint --output $outputdir --user 
 if [ $? -ne 0 ]
 then
   echo "convert-blueprint.py failed."
+  python3 delete-app.py --user $ravelloUser   --password $ravelloPass --domain-id $ravelloDomain -a ${appName}
   exit 1
 fi
 
@@ -86,7 +87,7 @@ ansible-playbook --skip-tags shutdown -i $outputdir/inventory $outputdir/class_p
 if [ $? -ne 0 ]
 then
   echo "ansible-playbook export disks failed."
-  #curl -s -X DELETE --user ${ravelloUser}:${ravelloPass} https://cloud.ravellosystems.com/api/v1/applications/${appID}
+  python3 delete-app.py --user $ravelloUser   --password $ravelloPass --domain-id $ravelloDomain -a ${appName}
   exit 1
 fi
 
