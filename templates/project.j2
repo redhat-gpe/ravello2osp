@@ -38,12 +38,21 @@
     depends_on:
       - openstack_project
 
+  openstack_project_neutron_quota:
+    type: OS::Neutron::Quota
+    properties:
+      project: {get_resource: openstack_project}
+      security_group: -1
+      security_group_rule: -1
+    depends_on:
+      - openstack_project
 
   openstack_project_cinder_quota:
     type: OS::Cinder::Quota
     properties:
       project: {get_resource: openstack_project}
       volumes: 100
+      gigabytes: -1
     depends_on:
       - openstack_project_nova_quota
 
