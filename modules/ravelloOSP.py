@@ -1,6 +1,7 @@
 
 from jinja2 import Environment, FileSystemLoader
 from netaddr import IPNetwork, IPAddress
+import ipaddress
 import base64
 import json
 import math
