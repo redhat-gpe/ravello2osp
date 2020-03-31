@@ -539,7 +539,10 @@ def generate_vms():
                         assign_public = True
                 else:
                     ip_address = ""
-                if "mac" not in network["device"]:
+                if "mac" not in network["device"] or \
+                    ("useAutomaticMac" in network["device"] and network["device"]["useAutomaticMac"]):
+                    print("useAutomaticMac")
+                    print(network["device"]["generatedMac"])
                     network["device"]["mac"] = network["device"]["generatedMac"]
                 if debug:
                     print("Create network device with mac %s on network %s with ip %s"
@@ -634,12 +637,12 @@ def generate_vms():
     for flavor in flavors:
         stack_admin += flavors[flavor].generate_template(env)
 
-    depends_ip = ""
+    depends_ips = []
     for vm, data in networks.items():
         # First ports with IP
         for vmnetwork in data:
             if vmnetwork["ip_address"]:
-                depends_ip = "%s-%d" % (vm, vmnetwork["index"])
+                depends_ips.append("%s-%d" % (vm, vmnetwork["index"]))
                 port = Port(vmnetwork["index"], vmnetwork["mac"], vm, vmnetwork["network"], \
                     vmnetwork["ip_address"], None, vmnetwork["services"], bpname)
                 stack_user += port.generate_template(env)
@@ -653,13 +656,13 @@ def generate_vms():
         for vmnetwork in data:
             if not vmnetwork["ip_address"]:
                 port = Port(vmnetwork["index"], vmnetwork["mac"], vm, vmnetwork["network"], \
-                    vmnetwork["ip_address"], depends_ip, vmnetwork["services"], bpname)
+                    vmnetwork["ip_address"], depends_ips, vmnetwork["services"], bpname)
                 stack_user += port.generate_template(env)
 
     for vm, data in trunks.items():
         for vmnetwork in data:
             trunk = Trunk(vm, vmnetwork["index"], vmnetwork["mac"], vmnetwork["network"], \
-                vmnetwork["subports"])
+                vmnetwork["subports"], depends_ips)
             stack_user += trunk.generate_template(env)
 
     for vm, data in vms.items():

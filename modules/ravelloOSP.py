@@ -332,7 +332,7 @@ class RavelloOsp:
                 self.sg_outputs.update(sgservice.generate_template_output(hostname.split(".")[0] + ".DOMAIN", self.env))
 
                 for subnet in self.network_config["subnets"]:
-                    netmask = subnet["net"] + "/" + subnet["mask"]
+                    netmask = str(ipaddress.ip_network(subnet["net"] + "/" + subnet["mask"], False))
                     rules.append({"name": "%s%s%s" % (service["name"],
                                                        subnet["net"], "tcp"),
                                   "proto": "tcp", "min": 1, "max": 65535,
