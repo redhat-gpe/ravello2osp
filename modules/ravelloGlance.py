@@ -95,7 +95,7 @@ class RavelloGlance():
                     if "name" in disk:
                         diskimagename = "{}-{}".format(vm["name"], disk["name"])
                     else:
-                        diskimagename = "{}-{}".format(vm["name"], disk["baseDiskImageName"].replace(".qcow", ""))
+                        diskimagename = "{}-{}".format(vm["name"], disk["baseDiskImageName"].rstrip('2').replace(".qcow", ""))
                 bpdisk = self.client.get_diskimages(filter={"name": diskimagename})
                 if bpdisk:
                     self.client.delete_diskimage(bpdisk[0]["id"])
@@ -134,7 +134,8 @@ class RavelloGlance():
 
         self.disks_created.sort(key=lambda e: e[2]['name'])
         for vmname, voltype, disk in self.disks_created[self.offset:self.offset + self.max_mount_count]:
-            print("Add disk %s to vm %s" % (disk["name"], vmname))
+            if self.debug:
+                print("Add disk %s to vm %s" % (disk["name"], vmname))
             self.vm["hardDrives"].append(
                 {"name": disk["name"], "baseDiskImageId": disk["id"], "baseDiskImageName": disk["name"],
                  "type": "DISK", "controllerIndex": i, "size": disk["size"], "controller": "VIRTIO"})
