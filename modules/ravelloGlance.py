@@ -25,7 +25,7 @@ class RavelloGlance():
         # self.image_format = args['image_format']
         self.start_conv_character = args['start_conv_character']
         self.single_vm = args['single_vm']
-        self.max_mount_count = 25 - (ord(self.start_conv_character) - ord('a'))
+        self.max_mount_count = 24 - (ord(self.start_conv_character) - ord('a'))
 
         self.bpname = args["blueprint"]
         self.client = client
@@ -99,6 +99,9 @@ class RavelloGlance():
                 bpdisk = self.client.get_diskimages(filter={"name": diskimagename})
                 if bpdisk:
                     self.client.delete_diskimage(bpdisk[0]["id"])
+                print(disk)
+                print({"diskId": disk["id"], "vmId": vm["id"], "diskImage": {
+                                     "name": diskimagename}, "applicationId": self.bp["id"], "blueprint": "true", "offline": "false"})
                 self.disks_created.append([vm["name"], voltype, self.client.create_diskimage({"diskId": disk["id"], "vmId": vm["id"], "diskImage": {
                                      "name": diskimagename}, "applicationId": self.bp["id"], "blueprint": "true", "offline": "false"})])
         self.prepare_vm()

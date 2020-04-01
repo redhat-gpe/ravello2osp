@@ -34,7 +34,7 @@ echo "Deploying Ravello app: $appName"
 python3 convert-blueprint.py  --blueprint $blueprint --output $outputdir --user $ravelloUser \
   --password $ravelloPass --name $appName $pk --importhost $import_host --auth-url $ospAuthURL \
   --auth-user $ospUser --auth-password $ospPass --ibm-endpoint $ibm_endpoint --ibm-api-key $ibm_api_key \
-  --ibm-bucket-name $ibm_bucket_name --ibm-resource-id $ibm_resource_id --domain-id $ravelloDomain -of 24
+  --ibm-bucket-name $ibm_bucket_name --ibm-resource-id $ibm_resource_id --domain-id $ravelloDomain -of 4
 
 if [ $? -ne 0 ]
 then
