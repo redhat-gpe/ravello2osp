@@ -16,11 +16,7 @@
     {% if depends or services %}
     depends_on:
       {% if depends %}
-        {% for depend in depends %}
-        {% if depend != name %}
-      - {{ depend }}_port
-        {% endif %}
-        {% endfor %}
+      - {{ depends }}_port
       {% endif %}
       {% if services %}
       - {{ vm }}_services_sg
