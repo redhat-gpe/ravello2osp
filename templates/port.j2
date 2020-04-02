@@ -15,8 +15,6 @@
       {% endif %}
     {% if depends or services %}
     depends_on:
-      {{ depends }}
-      {{ services }}
       {% if depends %}
       - {{ depends }}_port
       {% endif %}

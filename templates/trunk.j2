@@ -5,10 +5,10 @@
       network: { get_resource: {{network}}_vlan{{ subport["vlanId"] }}_network }
       mac_address: "{{ mac }}"
       port_security_enabled: False
+    {% if depends %}
     depends_on:
-      {% if depends %}
       - {{ depends }}_port
-      {% endif %}
+    {% endif %}
   {% endfor %}
   {{ name}}_trunk:
     type: OS::Neutron::Trunk
