@@ -99,9 +99,10 @@ class RavelloGlance():
                 bpdisk = self.client.get_diskimages(filter={"name": diskimagename})
                 if bpdisk:
                     self.client.delete_diskimage(bpdisk[0]["id"])
-                print(disk)
-                print({"diskId": disk["id"], "vmId": vm["id"], "diskImage": {
-                                     "name": diskimagename}, "applicationId": self.bp["id"], "blueprint": "true", "offline": "false"})
+                if self.debug:
+                    print(disk)
+                    print({"diskId": disk["id"], "vmId": vm["id"], "diskImage": {
+                                         "name": diskimagename}, "applicationId": self.bp["id"], "blueprint": "true", "offline": "false"})
                 self.disks_created.append([vm["name"], voltype, self.client.create_diskimage({"diskId": disk["id"], "vmId": vm["id"], "diskImage": {
                                      "name": diskimagename}, "applicationId": self.bp["id"], "blueprint": "true", "offline": "false"})])
         self.prepare_vm()
