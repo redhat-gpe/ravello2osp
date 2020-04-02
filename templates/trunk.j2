@@ -7,11 +7,7 @@
       port_security_enabled: False
     depends_on:
       {% if depends %}
-        {% for depend in depends %}
-        {% if depend != name %}
-      - {{ depend }}_port
-        {% endif %}
-        {% endfor %}
+      - {{ depends }}_port
       {% endif %}
   {% endfor %}
   {{ name}}_trunk:
