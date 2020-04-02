@@ -423,11 +423,9 @@ class RavelloOsp:
                     sys.exit(-1)
 
                 if disk["type"] == "DISK":
-                    if self.debug:
-                        print("Add disk %s" % (disk["name"]))
                     if "name" not in disk:
                         if "baseDiskImageName" in disk:
-                            disk["name"] = disk["baseDiskImageName"].split(".")[0]
+                            disk["name"] = disk["baseDiskImageName"].rstrip('2').replace(".qcow", "")
                         else:
                             disk["name"] = disk["id"]
                     if self.get_root_disk_name(vm) == disk["name"]:
