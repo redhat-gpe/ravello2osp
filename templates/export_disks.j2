@@ -60,7 +60,7 @@
             output_dir: "{{ output_dir }}"
             mode: "upload"
             images: "{{ images }}"
-            overwrite: "{{ overwrite_image | default('false') }}"
+            overwrite: "{{ overwrite_image | default(false) |bool }}"
 
     - name: Remove from the VM the directory {{ output_dir}}
       file:

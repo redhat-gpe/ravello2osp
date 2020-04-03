@@ -271,7 +271,7 @@ def convert_to_qcow(module):
 
         module.log("Start converting '%s' blueprint, image name '%s' to '%s' directory" % (blueprint, name, output_dir))
 
-        if os.path.isfile(outfile) and overwrite == 'always':
+        if os.path.isfile(outfile) and overwrite:
             os.remove(outfile)
 
         try:
