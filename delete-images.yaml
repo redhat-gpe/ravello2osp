@@ -29,5 +29,5 @@
         output_dir: "{{ output_dir }}"
         mode: "delete"
         glance_pool: "{{ ceph_cluster |default('red') }}-images"
-        overwrite: "{{ overwrite_image | default('false') }}"
+        overwrite: "{{ overwrite_image | default(False) |bool }}"
 
