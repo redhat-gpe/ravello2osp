@@ -14,7 +14,7 @@
     output_dir: "/root/images/{{ project_name }}"
 {% raw %}
   tasks:
-    - name: Wait 600 seconds for target connection to become reachable/usable
+    - name: Wait 1200 seconds for target connection to become reachable/usable
       wait_for_connection:
         timeout: 1200
 
@@ -27,8 +27,9 @@
       reboot:
       when: mount_opt.rc == 1
 
-    - name: Wait 600 seconds for target connection to become reachable/usable
+    - name: Wait 1200 seconds for target connection to become reachable/usable
       wait_for_connection:
+        timeout: 1200
       when: mount_opt.rc == 1
 
     - name: Remove directory /root/images
