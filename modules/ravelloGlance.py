@@ -25,7 +25,7 @@ class RavelloGlance():
         # self.image_format = args['image_format']
         self.start_conv_character = args['start_conv_character']
         self.single_vm = args['single_vm']
-        self.max_mount_count = 24 - (ord(self.start_conv_character) - ord('a'))
+        self.max_mount_count = args['max_count'] - (ord(self.start_conv_character) - ord('a'))
 
         self.bpname = args["blueprint"]
         self.client = client
@@ -127,14 +127,17 @@ class RavelloGlance():
 
         i = 0
 
-        if len(self.disks_created) > self.max_mount_count:
-            if not self.offset:
-                print(
-                    ("WARNING: More than {mmc} disks in the blueprint, in total {disks_length} disks.\n"
-                     "Only {mmc} disks are going to be attached. \nRun the command again with the option"
-                     " --offset number to export the next {mmc}").format(mmc=self.max_mount_count,
-                                                                         disks_length=len(self.disks_created))
+        max_total = int(self.offset) + int(self.max_mount_count)
+        if len(self.disks_created) > max_total:
+            print(
+                ("\033[1;31;40mWARNING: More than {mmc} disks in the blueprint, in total {disks_length} disks.\n"
+                 "Only {mmc} disks are going to be attached. \nRun the command again with the option"
+                 " --offset={max_total} number to export the next {mmc} \033[1;37;40m").format(
+                    mmc=self.max_mount_count,
+                    disks_length=len(self.disks_created),
+                    max_total=max_total
                 )
+            )
 
         self.disks_created.sort(key=lambda e: e[2]['name'])
         for vmname, voltype, disk in self.disks_created[self.offset:self.offset + self.max_mount_count]:

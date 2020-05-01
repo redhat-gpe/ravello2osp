@@ -1,5 +1,12 @@
 #!/bin/bash
 
+usage() {
+echo "Usage: $0 <<blueprint name>> [options]"
+echo -e "\t-heatonly|--heatonly - Create heat files and update repository"
+echo -e "\t-of=*|--offset=* From which disk number start to migrate disks [default: 0]"
+echo -e "\t-maxcount=*|--maxcount=* Max number of disks to be attached [default: 10]"
+}
+
 if [ ! -f creds.inc ]
 then
   echo "Please create creds.inc from creds.inc.example"
@@ -10,17 +17,38 @@ fi
 
 if [ -z "$1" ]
 then
-  echo "Usage: $0 <blueprint>"
-  exit 1
+  usage
 fi
 
 blueprint=$1
 
-option=""
-if [ -n "$2" ]
-then
-  option="$2"
-fi
+options=""
+heatonly=false
+for i in "$@"
+do
+case $i in
+    -heatonly|--heatonly)
+    options="$options --heatonly"
+    heatonly=true
+    shift
+    ;;
+    -of=*|--offset=*)
+    options="$options -of ${i#*=}"
+    shift
+    ;;
+    -maxcount=*|--maxcount=*)
+    options="$options --max-count ${i#*=}"
+    shift
+    ;;
+    -h|--help)
+    usage
+    exit 0
+    ;;
+    *)
+          # unknown option
+    ;;
+esac
+done
 
 outputdir="imported/${blueprint}-playbooks"
 mkdir -p $outputdir
@@ -38,16 +66,10 @@ fi
 
 echo "Deploying Ravello app: $appName"
 
-heat=""
-if [ "$option" == "heatonly" ]
-then
-  heat="--heatonly"
-fi
-
 python3 convert-blueprint.py  --blueprint $blueprint --output $outputdir --user $ravelloUser \
   --password $ravelloPass --name $appName $pk --importhost $import_host --auth-url $ospAuthURL \
   --auth-user $ospUser --auth-password $ospPass --ibm-endpoint $ibm_endpoint --ibm-api-key $ibm_api_key \
-  --ibm-bucket-name $ibm_bucket_name --ibm-resource-id $ibm_resource_id  --domain-id $ravelloDomain $heat
+  --ibm-bucket-name $ibm_bucket_name --ibm-resource-id $ibm_resource_id  --domain-id $ravelloDomain $options
 
 if [ $? -ne 0 ]
 then
@@ -56,7 +78,7 @@ then
   exit 1
 fi
 
-if [ "$option" == "heatonly" ]
+if [ "$heatonly" == "true" ]
 then
   ansible-playbook -i $outputdir/inventory playbook_update_heat_templates.yml -u root -e blueprint_name=$blueprint
   exit

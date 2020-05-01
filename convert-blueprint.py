@@ -58,6 +58,9 @@ def main():
     options.add_argument("-of", "--offset", required=False, default=0, type=int,
                          help="From which disk number start to migrate disks")
 
+    options.add_argument("--max-count", required=False, default=10, type=int,
+                         help="Number maximum of disk to be attached to the VM")
+
     options.add_argument("-dp", "--disk-prefix", required=False, default='',
                          help="Disk prefix to avoid moving around the work of others.")
     options.add_argument("-c", "--start-conv-character", required=False, default='a',
