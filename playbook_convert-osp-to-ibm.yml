@@ -16,7 +16,7 @@
       private: no
 
   tasks:
-    - name: Download images from OpenStack
+    - name: Upload images from OpenStack
       environment:
         OS_AUTH_URL: "{{ osp_auth_url }}"
         OS_USERNAME: "{{ osp_auth_username }}"
